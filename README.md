@@ -1,7 +1,7 @@
 # Language Learn App — 単語帳アプリ
 
 日本語話者向けの英語学習単語帳 Web アプリです。  
-Claude AI が意味・発音・例文を自動生成し、スマートな単語テストで効率よく覚えられます。
+AI（Claude または Gemini）が意味・発音・例文を自動生成し、スマートな単語テストで効率よく覚えられます。
 
 ---
 
@@ -25,7 +25,12 @@ Claude AI が意味・発音・例文を自動生成し、スマートな単語�
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) パッケージマネージャー
-- Anthropic API キー（[取得はこちら](https://console.anthropic.com/)）
+- AI API キー（Claude **または** Gemini のどちらか一方）
+
+| プロバイダー | 無料枠 | 取得先 |
+|---|---|---|
+| **Google Gemini** | あり（1,500 リクエスト/日・カード不要）⭐推奨 | https://aistudio.google.com/apikey |
+| Anthropic Claude | プランによる | https://console.anthropic.com/ |
 
 ### インストール手順
 
@@ -36,8 +41,24 @@ uv sync
 # 2. 環境変数ファイルを作成
 cp .env.example .env
 
-# 3. .env を編集して API キーを設定
-#    ANTHROPIC_API_KEY=sk-ant-xxxxxxxx
+# 3. .env を編集して使用する AI プロバイダーと API キーを設定
+```
+
+### AI プロバイダーの設定（`.env`）
+
+**Gemini を使う場合（推奨・無料）:**
+
+```env
+AI_PROVIDER=gemini
+GOOGLE_API_KEY=your_google_api_key_here
+GEMINI_MODEL=gemini-2.0-flash
+```
+
+**Claude を使う場合:**
+
+```env
+AI_PROVIDER=claude
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
 ```
 
 ### アプリを起動する
@@ -520,7 +541,8 @@ language_learn_app/
 │   │   └── exceptions.py        # カスタム例外クラス
 │   └── features/                # 機能別モジュール
 │       ├── words/               # 単語帳（モデル・CRUD・ルーター）
-│       ├── ai/                  # Claude API 連携
+│       ├── ai/                  # AI 連携（Claude / Gemini 切り替え対応）
+│       │   └── providers/       # プロバイダー実装（base / claude / gemini）
 │       ├── quiz/                # テスト（出題・回答・集計）
 │       ├── streak/              # 連続学習記録・カレンダー
 │       └── export/              # JSON/CSV エクスポート・インポート
@@ -552,5 +574,5 @@ language_learn_app/
 | フロントエンド | HTMX + Alpine.js | JS フレームワーク不要でリッチな UI |
 | スタイリング | Tailwind CSS (CDN) | 素早くきれいな UI 構築 |
 | データベース | SQLite + SQLAlchemy 2.x | ローカル動作・ファイル単体管理 |
-| AI | Anthropic Claude API (Haiku) | 高品質な日本語生成・低コスト |
+| AI | Claude / Gemini（切り替え可能） | `.env` の `AI_PROVIDER` で設定。Gemini は無料枠あり |
 | パッケージ管理 | uv | 高速・再現性の高い依存管理 |

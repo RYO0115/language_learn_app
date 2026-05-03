@@ -1,0 +1,100 @@
+# アプリケーションエントリーポイント
+# FastAPI アプリの生成・ルーター登録・テンプレート設定・DB 初期化を行う
+from pathlib import Path
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from language_learn.config import settings
+from language_learn.core.database import engine
+from language_learn.core.base_model import Base
+
+# 全モデルをインポートして SQLAlchemy のメタデータに登録する（create_all より前に必要）
+from language_learn.features.words.models import ExampleSentence, Word, WordSource  # noqa: F401
+from language_learn.features.quiz.models import QuizAnswer, QuizSession, QuizSessionWord  # noqa: F401
+from language_learn.features.streak.models import StudyRecord  # noqa: F401
+
+from language_learn.features.words.router import router as words_router
+from language_learn.features.words.router import set_templates as words_set_templates
+from language_learn.features.ai.router import router as ai_router
+from language_learn.features.ai.router import set_templates as ai_set_templates
+from language_learn.features.quiz.router import router as quiz_router
+from language_learn.features.quiz.router import set_templates as quiz_set_templates
+from language_learn.features.streak.router import router as streak_router
+from language_learn.features.streak.router import set_templates as streak_set_templates
+from language_learn.features.export.router import router as export_router
+from language_learn.features.export.router import set_templates as export_set_templates
+
+# プロジェクトルートディレクトリ
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# FastAPI アプリインスタンス
+app = FastAPI(title=settings.app_name, debug=settings.debug)
+
+# Jinja2 テンプレートエンジン設定
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+# 各フィーチャーのルーターにテンプレートを注入
+words_set_templates(templates)
+ai_set_templates(templates)
+quiz_set_templates(templates)
+streak_set_templates(templates)
+export_set_templates(templates)
+
+# 静的ファイル配信
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+
+# ルーター登録
+app.include_router(words_router)
+app.include_router(ai_router)
+app.include_router(quiz_router)
+app.include_router(streak_router)
+app.include_router(export_router)
+
+
+@app.on_event("startup")
+def startup_event() -> None:
+    """アプリ起動時に DB テーブルを作成する（既存テーブルはスキップ）。"""
+    Base.metadata.create_all(bind=engine)
+
+
+@app.get("/", response_class=HTMLResponse)
+def dashboard(request: Request):
+    """ダッシュボードページを返す。単語数・ストリーク情報を表示する。"""
+    from sqlalchemy.orm import Session
+    from language_learn.core.database import SessionLocal
+    from language_learn.features.words.service import get_word_count
+    from language_learn.features.streak.service import get_streak_info
+
+    db: Session = SessionLocal()
+    try:
+        word_count = get_word_count(db)
+        streak_info = get_streak_info(db)
+    finally:
+        db.close()
+
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "word_count": word_count,
+            "streak_info": streak_info,
+        },
+    )
+
+
+def main() -> None:
+    """CLI エントリーポイント（uv run start で起動）。"""
+    import uvicorn
+    uvicorn.run(
+        "language_learn.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.debug,
+    )
+
+
+if __name__ == "__main__":
+    main()

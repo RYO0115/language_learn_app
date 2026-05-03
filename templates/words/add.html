@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}単語を追加 — 単語帳アプリ{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+  <div class="flex items-center gap-3">
+    <a href="/words" class="text-gray-400 hover:text-gray-600">← 戻る</a>
+    <h1 class="text-2xl font-bold text-gray-800">単語を追加</h1>
+  </div>
+
+  {% if error %}
+  <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+    ⚠️ {{ error }}
+  </div>
+  {% endif %}
+
+  <form method="post" action="/words" class="space-y-6">
+
+    <!-- 単語入力と AI 生成 -->
+    <div class="bg-white rounded-xl shadow p-6 space-y-4">
+      <h2 class="font-semibold text-gray-700">1. 英単語を入力して AI で生成</h2>
+
+      <div class="flex gap-3">
+        <div class="flex-1">
+          <label class="block text-sm text-gray-600 mb-1">英単語 <span class="text-red-500">*</span></label>
+          <input type="text" name="word" id="word-input" required
+                 value="{{ form_data.word if form_data else '' }}"
+                 placeholder="例: serendipity"
+                 class="input-field w-full text-lg font-semibold">
+        </div>
+        <!-- HTMX で AI 生成ボタン -->
+        <div class="flex items-end">
+          <button type="button"
+                  hx-post="/api/ai/generate"
+                  hx-include="#word-input"
+                  hx-target="#ai-fields"
+                  hx-indicator="#ai-loading"
+                  class="btn-primary whitespace-nowrap h-[42px]">
+            ✨ AI で生成
+          </button>
+        </div>
+      </div>
+
+      <!-- ローディング表示 -->
+      <div id="ai-loading" class="htmx-indicator text-sm text-blue-600 flex items-center gap-2">
+        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+        </svg>
+        AI が生成中です...
+      </div>
+    </div>
+
+    <!-- AI 生成フィールド（HTMX で差し替わる） -->
+    <div id="ai-fields">
+      {% if form_data %}
+      <!-- エラー時にフォームデータを保持して再表示 -->
+      {% include "words/partials/ai_result.html" with context %}
+      {% else %}
+      <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-8 text-center text-gray-400">
+        <div class="text-3xl mb-2">✨</div>
+        <p>「AI で生成」ボタンを押すと、意味・発音・例文が自動入力されます</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- 出典情報 -->
+    <div class="bg-white rounded-xl shadow p-6 space-y-4" x-data="{ open: false }">
+      <button type="button" @click="open = !open"
+              class="w-full flex items-center justify-between font-semibold text-gray-700">
+        <span>3. 出典情報（任意）</span>
+        <span x-text="open ? '▲' : '▼'" class="text-gray-400 text-sm"></span>
+      </button>
+
+      <div x-show="open" x-cloak class="space-y-3">
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">出典の種類</label>
+          <select name="source_type" class="input-field">
+            <option value="book">📚 書籍</option>
+            <option value="website">🌐 ウェブサイト</option>
+            <option value="video">🎬 動画</option>
+            <option value="other">📌 その他</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">タイトル（書籍名・サイト名など）</label>
+          <input type="text" name="source_title" placeholder="例: Harry Potter and the Sorcerer's Stone"
+                 class="input-field w-full">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">URL</label>
+          <input type="url" name="source_url" placeholder="https://..."
+                 class="input-field w-full">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">ページ数・章など</label>
+          <input type="text" name="source_page" placeholder="例: p.42 / Chapter 3"
+                 class="input-field w-full">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">メモ</label>
+          <textarea name="source_detail" rows="2" placeholder="その他のメモ"
+                    class="input-field w-full"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 送信ボタン -->
+    <div class="flex gap-3 justify-end">
+      <a href="/words" class="btn-ghost">キャンセル</a>
+      <button type="submit" class="btn-primary px-8">💾 保存する</button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

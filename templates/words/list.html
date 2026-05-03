@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}単語帳 — 単語帳アプリ{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-800">単語帳</h1>
+    <a href="/words/add" class="btn-primary">＋ 単語を追加</a>
+  </div>
+
+  <!-- 検索・ソートフォーム -->
+  <form method="get" action="/words" class="bg-white rounded-xl shadow p-4 flex flex-wrap gap-3 items-end">
+    <div class="flex-1 min-w-40">
+      <label class="block text-sm text-gray-600 mb-1">検索</label>
+      <input type="text" name="search" value="{{ search }}"
+             placeholder="単語・意味で検索"
+             class="input-field w-full">
+    </div>
+    <div>
+      <label class="block text-sm text-gray-600 mb-1">ソート</label>
+      <select name="sort_by" class="input-field">
+        <option value="created_at_desc" {% if sort_by == "created_at_desc" %}selected{% endif %}>登録日（新しい順）</option>
+        <option value="created_at_asc"  {% if sort_by == "created_at_asc"  %}selected{% endif %}>登録日（古い順）</option>
+        <option value="word_asc"        {% if sort_by == "word_asc"        %}selected{% endif %}>アルファベット（A→Z）</option>
+        <option value="word_desc"       {% if sort_by == "word_desc"       %}selected{% endif %}>アルファベット（Z→A）</option>
+        <option value="accuracy_asc"    {% if sort_by == "accuracy_asc"    %}selected{% endif %}>正答率（低い順）</option>
+      </select>
+    </div>
+    <button type="submit" class="btn-secondary">絞り込む</button>
+    {% if search %}
+      <a href="/words" class="btn-ghost">クリア</a>
+    {% endif %}
+  </form>
+
+  <!-- 単語数 -->
+  <p class="text-sm text-gray-500">{{ words|length }} 件</p>
+
+  <!-- 単語テーブル -->
+  {% if words %}
+  <div class="bg-white rounded-xl shadow overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+        <tr>
+          <th class="px-4 py-3 text-left">単語</th>
+          <th class="px-4 py-3 text-left">品詞</th>
+          <th class="px-4 py-3 text-left">意味</th>
+          <th class="px-4 py-3 text-center">正答率</th>
+          <th class="px-4 py-3 text-center">回答数</th>
+          <th class="px-4 py-3 text-left">登録日</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for word in words %}
+        <tr class="hover:bg-blue-50 cursor-pointer transition"
+            onclick="location.href='/words/{{ word.id }}'">
+          <td class="px-4 py-3 font-semibold text-blue-700">{{ word.word }}</td>
+          <td class="px-4 py-3 text-gray-500 text-xs">{{ word.part_of_speech or "—" }}</td>
+          <td class="px-4 py-3 text-gray-700 max-w-xs truncate">{{ word.meaning }}</td>
+          <td class="px-4 py-3 text-center">
+            {% if word.accuracy is not none %}
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                {% if word.accuracy >= 80 %}bg-green-100 text-green-700
+                {% elif word.accuracy >= 50 %}bg-yellow-100 text-yellow-700
+                {% else %}bg-red-100 text-red-700{% endif %}">
+                {{ word.accuracy }}%
+              </span>
+            {% else %}
+              <span class="text-gray-400 text-xs">未テスト</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-center text-gray-500">{{ word.quiz_count }}</td>
+          <td class="px-4 py-3 text-gray-400">{{ word.created_at.strftime('%Y/%m/%d') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="bg-white rounded-xl shadow p-12 text-center text-gray-400">
+    <div class="text-5xl mb-3">📭</div>
+    <p class="text-lg">単語がまだ登録されていません</p>
+    <a href="/words/add" class="mt-4 inline-block btn-primary">最初の単語を追加する</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

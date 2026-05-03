@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}ダッシュボード — 単語帳アプリ{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold text-gray-800">ダッシュボード</h1>
+
+  <!-- サマリーカード -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <!-- 登録単語数 -->
+    <div class="bg-white rounded-xl shadow p-5 flex items-center gap-4">
+      <div class="text-4xl">📖</div>
+      <div>
+        <div class="text-3xl font-bold text-blue-600">{{ word_count }}</div>
+        <div class="text-sm text-gray-500">登録単語数</div>
+      </div>
+    </div>
+
+    <!-- 連続学習日数 -->
+    <div class="bg-white rounded-xl shadow p-5 flex items-center gap-4">
+      <div class="text-4xl">🔥</div>
+      <div>
+        <div class="text-3xl font-bold text-orange-500">{{ streak_info.current_streak }}</div>
+        <div class="text-sm text-gray-500">連続学習日数</div>
+      </div>
+    </div>
+
+    <!-- 累計学習日数 -->
+    <div class="bg-white rounded-xl shadow p-5 flex items-center gap-4">
+      <div class="text-4xl">📅</div>
+      <div>
+        <div class="text-3xl font-bold text-green-600">{{ streak_info.total_days }}</div>
+        <div class="text-sm text-gray-500">累計学習日数</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- アクションボタン -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <a href="/words/add"
+       class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-6 text-center shadow transition">
+      <div class="text-3xl mb-2">➕</div>
+      <div class="text-lg font-semibold">単語を追加する</div>
+      <div class="text-sm opacity-80 mt-1">新しい英単語を登録</div>
+    </a>
+    <a href="/quiz"
+       class="bg-green-600 hover:bg-green-700 text-white rounded-xl p-6 text-center shadow transition">
+      <div class="text-3xl mb-2">🎯</div>
+      <div class="text-lg font-semibold">テストを開始する</div>
+      <div class="text-sm opacity-80 mt-1">今日の単語テスト（20問）</div>
+    </a>
+  </div>
+
+  <!-- 今日のステータス -->
+  <div class="bg-white rounded-xl shadow p-5">
+    <h2 class="font-semibold text-gray-700 mb-3">今日の状況</h2>
+    {% if streak_info.today_studied %}
+      <p class="text-green-600 font-medium">✅ 今日は学習済みです！連続 {{ streak_info.current_streak }} 日目</p>
+    {% else %}
+      <p class="text-gray-500">今日はまだ学習していません。テストを受けてストリークを継続しましょう！</p>
+    {% endif %}
+    <p class="text-sm text-gray-400 mt-2">過去最長: <span class="font-semibold">{{ streak_info.longest_streak }}</span> 日連続</p>
+  </div>
+</div>
+{% endblock %}

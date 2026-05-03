@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}実績 — 単語帳アプリ{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+  <h1 class="text-2xl font-bold text-gray-800">実績</h1>
+
+  <!-- ストリーク情報 -->
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-white rounded-xl shadow p-5 text-center">
+      <div class="text-4xl mb-1">🔥</div>
+      <div class="text-3xl font-bold text-orange-500">{{ streak_info.current_streak }}</div>
+      <div class="text-sm text-gray-500 mt-1">現在の連続日数</div>
+    </div>
+    <div class="bg-white rounded-xl shadow p-5 text-center">
+      <div class="text-4xl mb-1">🏆</div>
+      <div class="text-3xl font-bold text-yellow-500">{{ streak_info.longest_streak }}</div>
+      <div class="text-sm text-gray-500 mt-1">最長連続日数</div>
+    </div>
+    <div class="bg-white rounded-xl shadow p-5 text-center">
+      <div class="text-4xl mb-1">📅</div>
+      <div class="text-3xl font-bold text-blue-500">{{ streak_info.total_days }}</div>
+      <div class="text-sm text-gray-500 mt-1">累計学習日数</div>
+    </div>
+  </div>
+
+  <!-- 今日のステータス -->
+  <div class="bg-white rounded-xl shadow p-4">
+    {% if streak_info.today_studied %}
+    <p class="text-green-600 font-medium">✅ 今日は学習済みです！</p>
+    {% else %}
+    <p class="text-gray-500">今日はまだ学習していません。<a href="/quiz" class="text-blue-600 hover:underline">テストを受ける</a></p>
+    {% endif %}
+  </div>
+
+  <!-- カレンダー -->
+  <div class="bg-white rounded-xl shadow p-6">
+    <!-- 月ナビゲーション -->
+    <div class="flex items-center justify-between mb-4">
+      <a href="/streak?year={{ prev_year }}&month={{ prev_month }}"
+         class="text-gray-400 hover:text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-100">
+        ← 前月
+      </a>
+      <h2 class="text-lg font-semibold text-gray-700">
+        {{ year }}年 {{ month }}月
+      </h2>
+      <a href="/streak?year={{ next_year }}&month={{ next_month }}"
+         class="text-gray-400 hover:text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-100">
+        翌月 →
+      </a>
+    </div>
+
+    <!-- 曜日ヘッダー -->
+    <div class="grid grid-cols-7 text-center text-xs text-gray-400 mb-2">
+      {% for day in ['日', '月', '火', '水', '木', '金', '土'] %}
+      <div class="py-1 {% if loop.index == 1 %}text-red-400{% elif loop.index == 7 %}text-blue-400{% endif %}">
+        {{ day }}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- カレンダーグリッド -->
+    {% set first_weekday = (year ~ '-' ~ '%02d' % month ~ '-01') | int %}
+    {# Jinja2 で月の最初の曜日を計算するために Python 側で計算済みの calendar_data を使う #}
+    {# calendar_data は {day: bool} のマップ #}
+    {% set ns = namespace(day=1) %}
+    {% set month_days = calendar_data|length %}
+
+    {# 月の開始曜日を Python で事前計算できないので Jinja2 macro で代替 #}
+    {# first_day_offset: calendar_data から最初の日付の曜日を間接計算 #}
+    {# テンプレート側ではシンプルに日付をリスト表示する #}
+    <div class="calendar-grid">
+      {% if month == 1 %}{% set prev_m = 12 %}{% set prev_y = year - 1 %}
+      {% else %}{% set prev_m = month - 1 %}{% set prev_y = year %}{% endif %}
+
+      {# Python 側で weekday を渡す必要があるため、ここでは簡易表示 #}
+      <div class="grid grid-cols-7 gap-1">
+        {% for i in range(1, month_days + 1) %}
+        {% set studied = calendar_data[i] %}
+        <div class="aspect-square flex items-center justify-center rounded-full text-sm
+          {% if studied %}bg-green-400 text-white font-semibold
+          {% elif today.year == year and today.month == month and today.day == i %}border-2 border-blue-400 text-blue-600 font-semibold
+          {% else %}text-gray-600{% endif %}">
+          {{ i }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 mt-4 text-xs text-gray-500">
+      <span class="flex items-center gap-1">
+        <span class="w-4 h-4 bg-green-400 rounded-full inline-block"></span> 学習済み
+      </span>
+      <span class="flex items-center gap-1">
+        <span class="w-4 h-4 border-2 border-blue-400 rounded-full inline-block"></span> 今日
+      </span>
+    </div>
+  </div>
+</div>
+{% endblock %}

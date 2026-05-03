@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}{{ word.word }} — 単語帳アプリ{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6" x-data="{ editing: false }">
+  <div class="flex items-center gap-3">
+    <a href="/words" class="text-gray-400 hover:text-gray-600">← 単語帳に戻る</a>
+  </div>
+
+  <!-- 単語ヘッダー -->
+  <div class="bg-white rounded-xl shadow p-6">
+    <div class="flex items-start justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-blue-700">{{ word.word }}</h1>
+        {% if word.reading %}
+          <p class="text-gray-400 font-mono text-sm mt-1">{{ word.reading }}</p>
+        {% endif %}
+        {% if word.part_of_speech %}
+          <span class="inline-block mt-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+            {{ word.part_of_speech }}
+          </span>
+        {% endif %}
+      </div>
+      <div class="text-right">
+        {% if accuracy is not none %}
+          <div class="text-2xl font-bold
+            {% if accuracy >= 80 %}text-green-600
+            {% elif accuracy >= 50 %}text-yellow-600
+            {% else %}text-red-600{% endif %}">
+            {{ accuracy }}%
+          </div>
+          <div class="text-xs text-gray-400">正答率（{{ quiz_count }}回）</div>
+        {% else %}
+          <div class="text-gray-400 text-sm">未テスト</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-4 border-t pt-4">
+      <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">意味</h3>
+      <p class="text-gray-800 leading-relaxed">{{ word.meaning }}</p>
+    </div>
+  </div>
+
+  <!-- 例文 -->
+  {% if word.example_sentences %}
+  <div class="bg-white rounded-xl shadow p-6 space-y-4">
+    <h2 class="font-semibold text-gray-700">例文</h2>
+    {% for sent in word.example_sentences %}
+    <div class="border-l-4 border-blue-400 pl-4 space-y-1">
+      <p class="text-gray-800">{{ sent.sentence_en }}</p>
+      <p class="text-gray-500 text-sm">{{ sent.sentence_ja }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- 出典情報 -->
+  {% if word.sources %}
+  <div class="bg-white rounded-xl shadow p-6">
+    <h2 class="font-semibold text-gray-700 mb-3">出典情報</h2>
+    {% for src in word.sources %}
+    <div class="text-sm space-y-1 text-gray-600 {% if not loop.first %}border-t pt-3 mt-3{% endif %}">
+      <p>
+        <span class="font-medium">
+          {% if src.source_type == 'book' %}📚 書籍
+          {% elif src.source_type == 'website' %}🌐 ウェブサイト
+          {% elif src.source_type == 'video' %}🎬 動画
+          {% else %}📌 その他{% endif %}
+        </span>
+        {% if src.title %} — {{ src.title }}{% endif %}
+      </p>
+      {% if src.url %}<p><a href="{{ src.url }}" target="_blank" class="text-blue-500 hover:underline break-all">{{ src.url }}</a></p>{% endif %}
+      {% if src.page_number %}<p>ページ: {{ src.page_number }}</p>{% endif %}
+      {% if src.detail %}<p class="text-gray-500">{{ src.detail }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- 編集フォーム（Alpine.js でトグル） -->
+  <div x-show="editing" x-cloak>
+    <form method="post" action="/words/{{ word.id }}/edit" class="bg-white rounded-xl shadow p-6 space-y-4">
+      <h2 class="font-semibold text-gray-700">単語を編集</h2>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">発音記号</label>
+          <input type="text" name="reading" value="{{ word.reading or '' }}" class="input-field w-full">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">品詞</label>
+          <input type="text" name="part_of_speech" value="{{ word.part_of_speech or '' }}" class="input-field w-full">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">意味 <span class="text-red-500">*</span></label>
+        <textarea name="meaning" required rows="3" class="input-field w-full">{{ word.meaning }}</textarea>
+      </div>
+
+      {% set sents = word.example_sentences %}
+      <div class="border border-gray-100 rounded-lg p-4 space-y-2 bg-blue-50/30">
+        <p class="text-xs font-semibold text-blue-600">例文 1</p>
+        <input type="text" name="sentence_en_1" value="{{ sents[0].sentence_en if sents|length > 0 else '' }}" placeholder="英語例文" class="input-field w-full">
+        <input type="text" name="sentence_ja_1" value="{{ sents[0].sentence_ja if sents|length > 0 else '' }}" placeholder="日本語訳" class="input-field w-full">
+      </div>
+      <div class="border border-gray-100 rounded-lg p-4 space-y-2 bg-blue-50/30">
+        <p class="text-xs font-semibold text-blue-600">例文 2</p>
+        <input type="text" name="sentence_en_2" value="{{ sents[1].sentence_en if sents|length > 1 else '' }}" placeholder="英語例文" class="input-field w-full">
+        <input type="text" name="sentence_ja_2" value="{{ sents[1].sentence_ja if sents|length > 1 else '' }}" placeholder="日本語訳" class="input-field w-full">
+      </div>
+
+      <!-- 出典追加 -->
+      <div>
+        <p class="text-sm font-semibold text-gray-600 mb-2">出典情報を追加</p>
+        <div class="grid grid-cols-2 gap-3">
+          <select name="source_type" class="input-field">
+            <option value="book">📚 書籍</option>
+            <option value="website">🌐 ウェブサイト</option>
+            <option value="video">🎬 動画</option>
+            <option value="other">📌 その他</option>
+          </select>
+          <input type="text" name="source_title" placeholder="タイトル" class="input-field">
+        </div>
+        <input type="url" name="source_url" placeholder="URL" class="input-field w-full mt-2">
+        <div class="grid grid-cols-2 gap-3 mt-2">
+          <input type="text" name="source_page" placeholder="ページ数" class="input-field">
+          <input type="text" name="source_detail" placeholder="メモ" class="input-field">
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end">
+        <button type="button" @click="editing = false" class="btn-ghost">キャンセル</button>
+        <button type="submit" class="btn-primary">💾 更新する</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- アクションボタン -->
+  <div class="flex gap-3">
+    <button @click="editing = !editing" class="btn-secondary flex-1">
+      ✏️ 編集
+    </button>
+    <form method="post" action="/words/{{ word.id }}/delete"
+          onsubmit="return confirm('「{{ word.word }}」を削除しますか？この操作は取り消せません。')">
+      <button type="submit" class="btn-danger">🗑️ 削除</button>
+    </form>
+  </div>
+
+  <p class="text-xs text-gray-400 text-right">
+    登録日: {{ word.created_at.strftime('%Y/%m/%d %H:%M') }}
+    / 更新日: {{ word.updated_at.strftime('%Y/%m/%d %H:%M') }}
+  </p>
+</div>
+{% endblock %}

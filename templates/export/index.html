@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}インポート/エクスポート — 単語帳アプリ{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+  <h1 class="text-2xl font-bold text-gray-800">インポート / エクスポート</h1>
+
+  {% if error %}
+  <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+    ⚠️ {{ error }}
+  </div>
+  {% endif %}
+
+  {% if import_result %}
+  <div class="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm">
+    <p class="font-semibold">✅ インポート完了</p>
+    <ul class="mt-2 space-y-1">
+      <li>新規インポート: <strong>{{ import_result.imported_count }}</strong> 件</li>
+      <li>重複スキップ: <strong>{{ import_result.skipped_count }}</strong> 件</li>
+      {% if import_result.error_count > 0 %}
+      <li class="text-red-600">エラー: {{ import_result.error_count }} 件</li>
+      {% endif %}
+    </ul>
+    {% if import_result.errors %}
+    <details class="mt-2">
+      <summary class="cursor-pointer text-red-600">エラー詳細を見る</summary>
+      <ul class="mt-1 space-y-0.5 text-red-500 text-xs">
+        {% for err in import_result.errors %}
+        <li>• {{ err }}</li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- エクスポート -->
+  <div class="bg-white rounded-xl shadow p-6 space-y-4">
+    <h2 class="font-semibold text-gray-700">📤 エクスポート</h2>
+    <p class="text-sm text-gray-500">単語帳のデータをファイルとして保存します。</p>
+    <div class="flex gap-3">
+      <a href="/export/download/json"
+         class="btn-primary flex items-center gap-2">
+        📄 JSON でダウンロード
+      </a>
+      <a href="/export/download/csv"
+         class="btn-secondary flex items-center gap-2">
+        📊 CSV でダウンロード
+      </a>
+    </div>
+    <div class="text-xs text-gray-400 space-y-1">
+      <p>• <strong>JSON</strong>: 例文・出典情報を含む完全なデータ</p>
+      <p>• <strong>CSV</strong>: Excel 等で開ける表形式（例文は最大2件）</p>
+    </div>
+  </div>
+
+  <!-- インポート -->
+  <div class="bg-white rounded-xl shadow p-6 space-y-4">
+    <h2 class="font-semibold text-gray-700">📥 インポート</h2>
+    <p class="text-sm text-gray-500">JSON または CSV ファイルから単語をインポートします。<br>
+       すでに登録されている単語は自動的にスキップされます。</p>
+
+    <form method="post" action="/export/import" enctype="multipart/form-data" class="space-y-3">
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">ファイルを選択（.json または .csv）</label>
+        <input type="file" name="file" accept=".json,.csv" required
+               class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4
+                      file:rounded-lg file:border-0 file:text-sm file:font-semibold
+                      file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100
+                      cursor-pointer">
+      </div>
+      <button type="submit" class="btn-primary">インポートする</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

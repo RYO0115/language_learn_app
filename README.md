@@ -8,6 +8,7 @@ AI（Claude または Gemini）が意味・発音・例文を自動生成し、�
 ## 目次
 
 1. [セットアップ](#セットアップ)
+   - [Gemini API キーの取得](#google-gemini-api-キーの取得手順無料クレジットカード不要)
 2. [ダッシュボード](#1-ダッシュボード)
 3. [単語を追加する](#2-単語を追加する)
 4. [単語帳を見る](#3-単語帳を見る)
@@ -31,6 +32,46 @@ AI（Claude または Gemini）が意味・発音・例文を自動生成し、�
 |---|---|---|
 | **Google Gemini** | あり（1,500 リクエスト/日・カード不要）⭐推奨 | https://aistudio.google.com/apikey |
 | Anthropic Claude | プランによる | https://console.anthropic.com/ |
+
+### Google Gemini API キーの取得手順（無料・クレジットカード不要）
+
+**1. Google アカウントでログイン**
+
+`https://aistudio.google.com/apikey` にアクセスし、Google アカウントでログインします。
+
+**2. API キーを発行**
+
+```
+┌──────────────────────────────────────────────┐
+│  Google AI Studio                            │
+│                                              │
+│  API キー                                    │
+│                                              │
+│  [＋ API キーを作成]  ← このボタンをクリック  │
+│                                              │
+│  キーの名前: language-learn-app              │
+│                          [作成] ← クリック   │
+│                                              │
+│  AIzaSy...（発行されたキー）  [コピー]        │
+│  ⚠️ このキーは再表示されません               │
+└──────────────────────────────────────────────┘
+```
+
+> 📸 **Screenshot:** `docs/screenshots/00_gemini_apikey.png`
+
+**3. `.env` に貼り付ける**
+
+```env
+AI_PROVIDER=gemini
+GOOGLE_API_KEY=AIzaSy...（コピーしたキーを貼り付け）
+GEMINI_MODEL=gemini-2.0-flash
+```
+
+> **無料枠の制限:**
+> - 1,500 リクエスト/日・30 リクエスト/分
+> - 単語 1 件の生成 = 1 リクエスト なので、個人利用では十分な容量です
+
+---
 
 ### インストール手順
 

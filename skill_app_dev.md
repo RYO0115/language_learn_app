@@ -9,7 +9,7 @@
 - Python 3.12+ / uv
 - FastAPI + Jinja2 + HTMX + Alpine.js + Tailwind CSS (CDN)
 - SQLAlchemy 2.x + SQLite
-- Anthropic Claude API
+- AI: Anthropic Claude API / Google Gemini API（.env の AI_PROVIDER で切り替え）
 
 ---
 
@@ -85,3 +85,15 @@ streak ← export
 - テスト形式の変更（選択肢式・穴埋め式など）は quiz/service.py の word_selection と quiz/router.py を変更
 - 出典情報の項目追加は word_sources テーブルの追加カラム or word_source_attributes テーブル（EAV）で対応
 - UI のテーマ変更は templates/base.html と static/css/app.css を変更
+
+### AI プロバイダーの追加方法
+新しい AI プロバイダー（例: Groq, Mistral）を追加する場合:
+1. `features/ai/providers/` に `{name}.py` を作成し `BaseAIProvider` を継承
+2. `generate_word_info()` を実装する
+3. `features/ai/service.py` の `get_ai_provider()` に分岐を追加する
+4. `config.py` の `ai_provider` の `Literal` 型に名前を追加する
+5. `.env.example` に新しいキー設定例を追加する
+
+現在の対応プロバイダー:
+- `claude` — Anthropic Claude API（要: ANTHROPIC_API_KEY）
+- `gemini` — Google Gemini API（要: GOOGLE_API_KEY、無料枠あり）

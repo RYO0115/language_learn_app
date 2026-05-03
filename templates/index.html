@@ -7,14 +7,15 @@
 
   <!-- サマリーカード -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-    <!-- 登録単語数 -->
-    <div class="bg-white rounded-xl shadow p-5 flex items-center gap-4">
+    <!-- 登録単語数（クリックで単語帳へ移動） -->
+    <a href="/words" class="bg-white rounded-xl shadow p-5 flex items-center gap-4 hover:shadow-md hover:bg-blue-50 transition-all duration-150 cursor-pointer">
       <div class="text-4xl">📖</div>
       <div>
         <div class="text-3xl font-bold text-blue-600">{{ word_count }}</div>
         <div class="text-sm text-gray-500">登録単語数</div>
+        <div class="text-xs text-blue-400 mt-0.5">単語帳を見る →</div>
       </div>
-    </div>
+    </a>
 
     <!-- 連続学習日数 -->
     <div class="bg-white rounded-xl shadow p-5 flex items-center gap-4">

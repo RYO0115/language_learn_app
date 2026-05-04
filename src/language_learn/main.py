@@ -56,8 +56,16 @@ app.include_router(export_router)
 
 @app.on_event("startup")
 def startup_event() -> None:
-    """アプリ起動時に DB テーブルを作成する（既存テーブルはスキップ）。"""
+    """アプリ起動時に DB テーブルを作成し、必要なカラムのマイグレーションを実行する。"""
+    from sqlalchemy import text
     Base.metadata.create_all(bind=engine)
+    # example_sentences.label カラムの追加（既存 DB 向けマイグレーション）
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE example_sentences ADD COLUMN label VARCHAR(50)"))
+            conn.commit()
+        except Exception:
+            pass  # 既にカラムが存在する場合はスキップ
 
 
 @app.get("/", response_class=HTMLResponse)

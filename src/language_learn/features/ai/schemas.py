@@ -1,5 +1,5 @@
 # AI 連携機能の Pydantic スキーマ定義
-# Claude API への入力・出力の型を定義する
+# Claude API / Gemini API への入力・出力の型を定義する
 from pydantic import BaseModel, Field
 
 
@@ -14,11 +14,19 @@ class ExampleSentenceAI(BaseModel):
     sentence_ja: str = Field(..., description="日本語訳")
 
 
-class AIGenerateResponse(BaseModel):
-    """Claude API が返す単語情報。フォームに自動入力するために使用する。"""
-    reading: str = Field(default="", description="発音記号（IPA 表記）")
-    part_of_speech: str = Field(default="", description="品詞（日本語表記）")
-    meaning: str = Field(..., description="日本語での意味・説明")
+class WordMeaningAI(BaseModel):
+    """品詞ごとの意味・例文セット。複数品詞を持つ単語はこのオブジェクトが複数返される。"""
+    part_of_speech: str = Field(..., description="品詞（日本語表記: 名詞・動詞・形容詞など）")
+    meaning: str = Field(..., description="この品詞における日本語の意味・説明")
     example_sentences: list[ExampleSentenceAI] = Field(
-        default_factory=list, description="例文リスト（2件）"
+        default_factory=list, description="この品詞の例文リスト（2件）"
+    )
+
+
+class AIGenerateResponse(BaseModel):
+    """Claude / Gemini API が返す単語情報。品詞ごとに意味と例文をまとめた構造。"""
+    reading: str = Field(default="", description="発音記号（IPA 表記）")
+    word_meanings: list[WordMeaningAI] = Field(
+        default_factory=list,
+        description="品詞ごとの意味リスト。複数品詞を持つ単語は複数要素になる。"
     )

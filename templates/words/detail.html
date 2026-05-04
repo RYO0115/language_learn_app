@@ -42,15 +42,25 @@
     </div>
   </div>
 
-  <!-- 例文 -->
+  <!-- 例文（品詞ラベルでグループ化して表示） -->
   {% if word.example_sentences %}
   <div class="bg-white rounded-xl shadow p-6 space-y-4">
     <h2 class="font-semibold text-gray-700">例文</h2>
+    {% set current_label = namespace(value="__unset__") %}
     {% for sent in word.example_sentences %}
-    <div class="border-l-4 border-blue-400 pl-4 space-y-1">
-      <p class="text-gray-800">{{ sent.sentence_en }}</p>
-      <p class="text-gray-500 text-sm">{{ sent.sentence_ja }}</p>
-    </div>
+      {% if sent.label != current_label.value %}
+        {% set current_label.value = sent.label %}
+        {% if sent.label %}
+        <p class="text-xs font-bold text-blue-600 uppercase tracking-wider mt-3
+                  {% if not loop.first %}border-t pt-3{% endif %}">
+          {{ sent.label }}
+        </p>
+        {% endif %}
+      {% endif %}
+      <div class="border-l-4 border-blue-400 pl-4 space-y-1">
+        <p class="text-gray-800">{{ sent.sentence_en }}</p>
+        <p class="text-gray-500 text-sm">{{ sent.sentence_ja }}</p>
+      </div>
     {% endfor %}
   </div>
   {% endif %}

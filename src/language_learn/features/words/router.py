@@ -58,38 +58,58 @@ def word_add_page(request: Request):
 
 
 @router.post("/words", response_class=HTMLResponse)
-def word_create(
-    request: Request,
-    word: str = Form(...),
-    reading: str = Form(default=""),
-    meaning: str = Form(...),
-    part_of_speech: str = Form(default=""),
-    sentence_en_1: str = Form(default=""),
-    sentence_ja_1: str = Form(default=""),
-    sentence_en_2: str = Form(default=""),
-    sentence_ja_2: str = Form(default=""),
-    source_type: str = Form(default="other"),
-    source_title: str = Form(default=""),
-    source_url: str = Form(default=""),
-    source_page: str = Form(default=""),
-    source_detail: str = Form(default=""),
-    db: Session = Depends(get_db),
-):
-    """フォームから単語を登録する。重複時はエラーメッセージ付きでフォームを再表示。"""
-    # 例文リストを構築（空文字は除外）
-    example_sentences = []
-    if sentence_en_1.strip():
-        example_sentences.append(
-            ExampleSentenceCreate(sentence_en=sentence_en_1, sentence_ja=sentence_ja_1, order=1)
-        )
-    if sentence_en_2.strip():
-        example_sentences.append(
-            ExampleSentenceCreate(sentence_en=sentence_en_2, sentence_ja=sentence_ja_2, order=2)
-        )
+async def word_create(request: Request, db: Session = Depends(get_db)):
+    """フォームから単語を登録する。品詞ごとにインデックスされたフィールドを解析する。
+
+    フォームフィールド形式:
+      word, reading
+      meaning_0, part_of_speech_0, sentence_en_0_0, sentence_ja_0_0, sentence_en_0_1, ...
+      meaning_1, part_of_speech_1, sentence_en_1_0, ...  （複数品詞の場合）
+      source_type, source_title, source_url, source_page, source_detail
+    """
+    form = await request.form()
+    word_text = str(form.get("word", "")).strip()
+    reading = str(form.get("reading", "")).strip()
+
+    # 品詞ごとの意味・例文を収集（最大 8 品詞まで対応）
+    example_sentences: list[ExampleSentenceCreate] = []
+    meaning_parts: list[str] = []
+    pos_parts: list[str] = []
+    order_counter = 1
+
+    for i in range(8):
+        meaning_i = str(form.get(f"meaning_{i}", "")).strip()
+        if not meaning_i:
+            break
+        pos_i = str(form.get(f"part_of_speech_{i}", "")).strip()
+        # 意味テキストは「【品詞】意味」形式で結合
+        meaning_parts.append(f"【{pos_i}】{meaning_i}" if pos_i else meaning_i)
+        pos_parts.append(pos_i)
+
+        for j in range(4):  # 1品詞につき最大 4 例文
+            en = str(form.get(f"sentence_en_{i}_{j}", "")).strip()
+            ja = str(form.get(f"sentence_ja_{i}_{j}", "")).strip()
+            if not en:
+                break
+            example_sentences.append(ExampleSentenceCreate(
+                sentence_en=en,
+                sentence_ja=ja,
+                order=order_counter,
+                label=pos_i or None,
+            ))
+            order_counter += 1
+
+    combined_meaning = "\n\n".join(meaning_parts)
+    combined_pos = "・".join(p for p in pos_parts if p) or None
 
     # 出典情報（1項目でも入力があれば保存）
+    source_type = str(form.get("source_type", "other"))
+    source_title = str(form.get("source_title", "")).strip()
+    source_url = str(form.get("source_url", "")).strip()
+    source_page = str(form.get("source_page", "")).strip()
+    source_detail = str(form.get("source_detail", "")).strip()
     source = None
-    if any([source_title.strip(), source_url.strip(), source_page.strip(), source_detail.strip()]):
+    if any([source_title, source_url, source_page, source_detail]):
         source = WordSourceCreate(
             source_type=source_type,
             title=source_title or None,
@@ -99,10 +119,10 @@ def word_create(
         )
 
     word_data = WordCreate(
-        word=word,
+        word=word_text,
         reading=reading or None,
-        meaning=meaning,
-        part_of_speech=part_of_speech or None,
+        meaning=combined_meaning,
+        part_of_speech=combined_pos,
         example_sentences=example_sentences,
         source=source,
     )
@@ -113,12 +133,7 @@ def word_create(
         return templates.TemplateResponse(
             request,
             "words/add.html",
-            {"error": str(e), "form_data": {
-                "word": word, "reading": reading, "meaning": meaning,
-                "part_of_speech": part_of_speech,
-                "sentence_en_1": sentence_en_1, "sentence_ja_1": sentence_ja_1,
-                "sentence_en_2": sentence_en_2, "sentence_ja_2": sentence_ja_2,
-            }},
+            {"error": str(e)},
             status_code=409,
         )
 

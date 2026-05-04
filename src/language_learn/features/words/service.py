@@ -70,13 +70,14 @@ def create_word(db: Session, data: WordCreate) -> Word:
     db.add(word)
     db.flush()  # word.id を確定させる
 
-    # 例文を登録
+    # 例文を登録（label があれば品詞グループとして保存）
     for sent_data in data.example_sentences:
         sentence = ExampleSentence(
             word_id=word.id,
             sentence_en=sent_data.sentence_en,
             sentence_ja=sent_data.sentence_ja,
             order=sent_data.order,
+            label=sent_data.label,
         )
         db.add(sentence)
 

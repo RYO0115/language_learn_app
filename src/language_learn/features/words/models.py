@@ -55,6 +55,8 @@ class ExampleSentence(Base):
     sentence_ja: Mapped[str] = mapped_column(Text, nullable=False)
     # 順序（1番目・2番目…と表示順を制御）
     order: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # この例文が属する品詞ラベル（例: 名詞・動詞）。複数品詞を持つ単語で例文をグループ化するために使用する
+    label: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     word: Mapped["Word"] = relationship("Word", back_populates="example_sentences")
 

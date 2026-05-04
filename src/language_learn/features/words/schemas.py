@@ -13,6 +13,7 @@ class ExampleSentenceCreate(BaseModel):
     sentence_en: str = Field(..., description="英語例文")
     sentence_ja: str = Field(..., description="日本語訳")
     order: int = Field(default=1, ge=1, description="表示順序")
+    label: str | None = Field(default=None, description="この例文が属する品詞ラベル（例: 名詞・動詞）")
 
 
 class ExampleSentenceResponse(BaseModel):
@@ -23,6 +24,7 @@ class ExampleSentenceResponse(BaseModel):
     sentence_en: str
     sentence_ja: str
     order: int
+    label: str | None = None
 
 
 # --- 出典情報スキーマ ---

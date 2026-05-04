@@ -1,89 +1,81 @@
 <!-- AI 生成結果フォームフィールド（HTMX パーシャル）
-     /api/ai/generate の成功レスポンスとして返されるフォーム入力欄 -->
-<div class="bg-white rounded-xl shadow p-6 space-y-4">
-  <h2 class="font-semibold text-gray-700">2. 生成された情報を確認・編集</h2>
-
-  {% if result is defined %}
-  <!-- AI 生成結果を使用 -->
-  {% set reading_val = result.reading %}
-  {% set pos_val = result.part_of_speech %}
-  {% set meaning_val = result.meaning %}
-  {% set ex1_en = result.example_sentences[0].sentence_en if result.example_sentences|length > 0 else '' %}
-  {% set ex1_ja = result.example_sentences[0].sentence_ja if result.example_sentences|length > 0 else '' %}
-  {% set ex2_en = result.example_sentences[1].sentence_en if result.example_sentences|length > 1 else '' %}
-  {% set ex2_ja = result.example_sentences[1].sentence_ja if result.example_sentences|length > 1 else '' %}
-  {% elif form_data is defined and form_data %}
-  <!-- エラー後の再表示時はフォームデータを使用 -->
-  {% set reading_val = form_data.reading %}
-  {% set pos_val = form_data.part_of_speech %}
-  {% set meaning_val = form_data.meaning %}
-  {% set ex1_en = form_data.sentence_en_1 %}
-  {% set ex1_ja = form_data.sentence_ja_1 %}
-  {% set ex2_en = form_data.sentence_en_2 %}
-  {% set ex2_ja = form_data.sentence_ja_2 %}
-  {% else %}
-  {% set reading_val = '' %}
-  {% set pos_val = '' %}
-  {% set meaning_val = '' %}
-  {% set ex1_en = '' %}
-  {% set ex1_ja = '' %}
-  {% set ex2_en = '' %}
-  {% set ex2_ja = '' %}
-  {% endif %}
-
-  <div class="grid grid-cols-2 gap-4">
-    <div>
-      <label class="block text-sm text-gray-600 mb-1">発音記号</label>
-      <input type="text" name="reading" value="{{ reading_val }}"
-             placeholder="例: /ˌserənˈdɪpɪti/"
-             class="input-field w-full font-mono">
-    </div>
-    <div>
-      <label class="block text-sm text-gray-600 mb-1">品詞</label>
-      <input type="text" name="part_of_speech" value="{{ pos_val }}"
-             placeholder="例: 名詞"
-             class="input-field w-full">
-    </div>
+     /api/ai/generate の成功レスポンスとして返される。
+     複数品詞がある場合はセクションを品詞ごとに分けて表示する。 -->
+<div class="bg-white rounded-xl shadow p-6 space-y-5">
+  <div class="flex items-center justify-between">
+    <h2 class="font-semibold text-gray-700">2. 生成された情報を確認・編集</h2>
+    {% if result.word_meanings | length > 1 %}
+    <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+      {{ result.word_meanings | length }} 種類の品詞が見つかりました
+    </span>
+    {% endif %}
   </div>
 
+  <!-- 発音記号（全品詞共通） -->
   <div>
-    <label class="block text-sm text-gray-600 mb-1">意味 <span class="text-red-500">*</span></label>
-    <textarea name="meaning" required rows="3"
-              placeholder="日本語での意味・説明"
-              class="input-field w-full">{{ meaning_val }}</textarea>
+    <label class="block text-sm text-gray-600 mb-1">発音記号</label>
+    <input type="text" name="reading" value="{{ result.reading }}"
+           placeholder="例: /haʊs/"
+           class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-300">
   </div>
 
-  <!-- 例文 1 -->
-  <div class="border border-gray-100 rounded-lg p-4 space-y-2 bg-blue-50/30">
-    <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">例文 1</p>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">英語例文</label>
-      <input type="text" name="sentence_en_1" value="{{ ex1_en }}"
-             placeholder="英語の例文"
-             class="input-field w-full">
-    </div>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">日本語訳</label>
-      <input type="text" name="sentence_ja_1" value="{{ ex1_ja }}"
-             placeholder="日本語訳"
-             class="input-field w-full">
-    </div>
-  </div>
+  <!-- 品詞ごとのセクション -->
+  {% for m in result.word_meanings %}
+  {% set idx = loop.index0 %}
+  <div class="border border-gray-200 rounded-xl p-4 space-y-3
+              {% if result.word_meanings | length > 1 %}bg-gray-50{% endif %}">
 
-  <!-- 例文 2 -->
-  <div class="border border-gray-100 rounded-lg p-4 space-y-2 bg-blue-50/30">
-    <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">例文 2</p>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">英語例文</label>
-      <input type="text" name="sentence_en_2" value="{{ ex2_en }}"
-             placeholder="英語の例文"
-             class="input-field w-full">
+    {% if result.word_meanings | length > 1 %}
+    <p class="text-xs font-bold text-blue-600 uppercase tracking-wider">
+      品詞 {{ loop.index }} / {{ result.word_meanings | length }}
+    </p>
+    {% endif %}
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">品詞</label>
+        <input type="text" name="part_of_speech_{{ idx }}"
+               value="{{ m.part_of_speech }}"
+               placeholder="例: 名詞"
+               class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+      </div>
     </div>
+
     <div>
-      <label class="block text-xs text-gray-500 mb-1">日本語訳</label>
-      <input type="text" name="sentence_ja_2" value="{{ ex2_ja }}"
+      <label class="block text-xs text-gray-500 mb-1">意味 <span class="text-red-500">*</span></label>
+      <textarea name="meaning_{{ idx }}" required rows="2"
+                placeholder="日本語での意味・説明"
+                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">{{ m.meaning }}</textarea>
+    </div>
+
+    <!-- 例文（最大2件） -->
+    {% for s in m.example_sentences[:2] %}
+    {% set j = loop.index0 %}
+    <div class="border border-gray-100 rounded-lg p-3 space-y-2 bg-white">
+      <p class="text-xs font-semibold text-blue-500 uppercase tracking-wide">例文 {{ loop.index }}</p>
+      <input type="text" name="sentence_en_{{ idx }}_{{ j }}"
+             value="{{ s.sentence_en }}"
+             placeholder="英語例文"
+             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+      <input type="text" name="sentence_ja_{{ idx }}_{{ j }}"
+             value="{{ s.sentence_ja }}"
              placeholder="日本語訳"
-             class="input-field w-full">
+             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
     </div>
+    {% endfor %}
+    {# 例文が1件以下の場合に空欄フィールドを補完 #}
+    {% for j in range(m.example_sentences[:2] | length, 2) %}
+    <div class="border border-gray-100 rounded-lg p-3 space-y-2 bg-white">
+      <p class="text-xs font-semibold text-blue-500 uppercase tracking-wide">例文 {{ j + 1 }}</p>
+      <input type="text" name="sentence_en_{{ idx }}_{{ j }}"
+             value="" placeholder="英語例文"
+             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+      <input type="text" name="sentence_ja_{{ idx }}_{{ j }}"
+             value="" placeholder="日本語訳"
+             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+    </div>
+    {% endfor %}
+
   </div>
+  {% endfor %}
 </div>

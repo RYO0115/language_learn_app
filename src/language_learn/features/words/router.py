@@ -18,6 +18,7 @@ from language_learn.features.words.service import (
     bulk_delete_words,
     create_word,
     delete_word,
+    get_source_suggestions,
     get_word,
     list_words,
     update_word,
@@ -52,9 +53,12 @@ def word_list_page(
 
 
 @router.get("/words/add", response_class=HTMLResponse)
-def word_add_page(request: Request):
-    """単語追加ページを返す。"""
-    return templates.TemplateResponse(request, "words/add.html", {})
+def word_add_page(request: Request, db: Session = Depends(get_db)):
+    """単語追加ページを返す。出典情報の入力補完用に過去の候補も渡す。"""
+    return templates.TemplateResponse(
+        request, "words/add.html",
+        {"source_suggestions": get_source_suggestions(db)},
+    )
 
 
 @router.post("/words", response_class=HTMLResponse)
@@ -164,7 +168,12 @@ def word_detail_page(request: Request, word_id: int, db: Session = Depends(get_d
     return templates.TemplateResponse(
         request,
         "words/detail.html",
-        {"word": word, "accuracy": accuracy, "quiz_count": total},
+        {
+            "word": word,
+            "accuracy": accuracy,
+            "quiz_count": total,
+            "source_suggestions": get_source_suggestions(db),
+        },
     )
 
 

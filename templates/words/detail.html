@@ -121,6 +121,18 @@
         <input type="text" name="sentence_ja_2" value="{{ sents[1].sentence_ja if sents|length > 1 else '' }}" placeholder="日本語訳" class="input-field w-full">
       </div>
 
+      <!-- 過去に入力したタイトル・URL の候補リスト -->
+      <datalist id="edit-source-title-list">
+        {% for title in source_suggestions.titles %}
+        <option value="{{ title }}">
+        {% endfor %}
+      </datalist>
+      <datalist id="edit-source-url-list">
+        {% for url in source_suggestions.urls %}
+        <option value="{{ url }}">
+        {% endfor %}
+      </datalist>
+
       <!-- 出典追加 -->
       <div>
         <p class="text-sm font-semibold text-gray-600 mb-2">出典情報を追加</p>
@@ -131,9 +143,13 @@
             <option value="video">🎬 動画</option>
             <option value="other">📌 その他</option>
           </select>
-          <input type="text" name="source_title" placeholder="タイトル" class="input-field">
+          <input type="text" name="source_title"
+                 list="edit-source-title-list"
+                 placeholder="タイトル" class="input-field">
         </div>
-        <input type="url" name="source_url" placeholder="URL" class="input-field w-full mt-2">
+        <input type="text" name="source_url"
+               list="edit-source-url-list"
+               placeholder="URL" class="input-field w-full mt-2">
         <div class="grid grid-cols-2 gap-3 mt-2">
           <input type="text" name="source_page" placeholder="ページ数" class="input-field">
           <input type="text" name="source_detail" placeholder="メモ" class="input-field">

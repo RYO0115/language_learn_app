@@ -232,6 +232,31 @@ def delete_word(db: Session, word_id: int) -> None:
     db.commit()
 
 
+def get_source_suggestions(db: Session) -> dict[str, list[str]]:
+    """出典情報の入力補完用に、過去に登録されたユニークな値を返す。
+
+    Returns:
+        {"titles": [...], "urls": [...]} の形式で候補リストを返す。
+    """
+    from sqlalchemy import distinct
+
+    titles = [
+        row[0] for row in
+        db.query(distinct(WordSource.title))
+        .filter(WordSource.title.isnot(None), WordSource.title != "")
+        .order_by(WordSource.title)
+        .all()
+    ]
+    urls = [
+        row[0] for row in
+        db.query(distinct(WordSource.url))
+        .filter(WordSource.url.isnot(None), WordSource.url != "")
+        .order_by(WordSource.url)
+        .all()
+    ]
+    return {"titles": titles, "urls": urls}
+
+
 def bulk_delete_words(db: Session, word_ids: list[int]) -> int:
     """複数の単語をまとめて削除する。ORM 経由で削除し CASCADE が確実に動作するようにする。
 

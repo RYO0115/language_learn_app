@@ -72,10 +72,22 @@
         <span x-text="open ? '▲' : '▼'" class="text-gray-400 text-sm"></span>
       </button>
 
+      <!-- 過去に入力したタイトル・URL の候補リスト -->
+      <datalist id="source-title-list">
+        {% for title in source_suggestions.titles %}
+        <option value="{{ title }}">
+        {% endfor %}
+      </datalist>
+      <datalist id="source-url-list">
+        {% for url in source_suggestions.urls %}
+        <option value="{{ url }}">
+        {% endfor %}
+      </datalist>
+
       <div x-show="open" x-cloak class="space-y-3">
         <div>
           <label class="block text-sm text-gray-600 mb-1">出典の種類</label>
-          <select name="source_type" class="input-field">
+          <select name="source_type" class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 w-full">
             <option value="book">📚 書籍</option>
             <option value="website">🌐 ウェブサイト</option>
             <option value="video">🎬 動画</option>
@@ -83,24 +95,38 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm text-gray-600 mb-1">タイトル（書籍名・サイト名など）</label>
-          <input type="text" name="source_title" placeholder="例: Harry Potter and the Sorcerer's Stone"
-                 class="input-field w-full">
+          <label class="block text-sm text-gray-600 mb-1">
+            タイトル（書籍名・サイト名など）
+            {% if source_suggestions.titles %}
+            <span class="text-xs text-blue-400 ml-1">{{ source_suggestions.titles | length }} 件の候補あり</span>
+            {% endif %}
+          </label>
+          <input type="text" name="source_title"
+                 list="source-title-list"
+                 placeholder="例: Harry Potter and the Sorcerer's Stone"
+                 class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 w-full">
         </div>
         <div>
-          <label class="block text-sm text-gray-600 mb-1">URL</label>
-          <input type="url" name="source_url" placeholder="https://..."
-                 class="input-field w-full">
+          <label class="block text-sm text-gray-600 mb-1">
+            URL
+            {% if source_suggestions.urls %}
+            <span class="text-xs text-blue-400 ml-1">{{ source_suggestions.urls | length }} 件の候補あり</span>
+            {% endif %}
+          </label>
+          <input type="text" name="source_url"
+                 list="source-url-list"
+                 placeholder="https://..."
+                 class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 w-full">
         </div>
         <div>
           <label class="block text-sm text-gray-600 mb-1">ページ数・章など</label>
           <input type="text" name="source_page" placeholder="例: p.42 / Chapter 3"
-                 class="input-field w-full">
+                 class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 w-full">
         </div>
         <div>
           <label class="block text-sm text-gray-600 mb-1">メモ</label>
           <textarea name="source_detail" rows="2" placeholder="その他のメモ"
-                    class="input-field w-full"></textarea>
+                    class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"></textarea>
         </div>
       </div>
     </div>

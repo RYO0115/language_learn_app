@@ -15,6 +15,7 @@ from language_learn.features.words.schemas import (
     WordUpdate,
 )
 from language_learn.features.words.service import (
+    bulk_delete_words,
     create_word,
     delete_word,
     get_word,
@@ -205,6 +206,18 @@ def word_update(
         raise HTTPException(status_code=404, detail="単語が見つかりません")
 
     return RedirectResponse(url=f"/words/{word_id}", status_code=303)
+
+
+@router.post("/words/bulk-delete")
+def words_bulk_delete(
+    request: Request,
+    word_ids: list[int] = Form(default=[]),
+    db: Session = Depends(get_db),
+):
+    """選択された複数の単語を一括削除し、単語一覧にリダイレクトする。"""
+    if word_ids:
+        bulk_delete_words(db, word_ids)
+    return RedirectResponse(url="/words", status_code=303)
 
 
 @router.post("/words/{word_id}/delete")

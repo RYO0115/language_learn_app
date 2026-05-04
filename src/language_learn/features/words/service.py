@@ -231,6 +231,20 @@ def delete_word(db: Session, word_id: int) -> None:
     db.commit()
 
 
+def bulk_delete_words(db: Session, word_ids: list[int]) -> int:
+    """複数の単語をまとめて削除する。ORM 経由で削除し CASCADE が確実に動作するようにする。
+
+    Returns:
+        実際に削除した件数
+    """
+    words = db.query(Word).filter(Word.id.in_(word_ids)).all()
+    count = len(words)
+    for word in words:
+        db.delete(word)
+    db.commit()
+    return count
+
+
 def get_word_count(db: Session) -> int:
     """登録単語の総数を返す。"""
     return db.query(func.count(Word.id)).scalar() or 0

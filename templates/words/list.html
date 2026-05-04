@@ -2,10 +2,27 @@
 {% block title %}単語帳 — 単語帳アプリ{% endblock %}
 
 {% block content %}
-<div class="space-y-4">
+<div class="space-y-4"
+     x-data="{
+       selectedCount: 0,
+       updateCount() {
+         this.selectedCount = document.querySelectorAll('input[name=word_ids]:checked').length;
+       },
+       toggleAll(e) {
+         document.querySelectorAll('input[name=word_ids]').forEach(cb => cb.checked = e.target.checked);
+         this.updateCount();
+       },
+       confirmDelete() {
+         if (this.selectedCount === 0) return;
+         if (confirm(this.selectedCount + '件の単語を削除しますか？\nこの操作は取り消せません。')) {
+           document.getElementById('bulk-delete-form').submit();
+         }
+       }
+     }">
+
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold text-gray-800">単語帳</h1>
-    <a href="/words/add" class="btn-primary">＋ 単語を追加</a>
+    <a href="/words/add" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition">＋ 単語を追加</a>
   </div>
 
   <!-- 検索・ソートフォーム -->
@@ -14,11 +31,11 @@
       <label class="block text-sm text-gray-600 mb-1">検索</label>
       <input type="text" name="search" value="{{ search }}"
              placeholder="単語・意味で検索"
-             class="input-field w-full">
+             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
     </div>
     <div>
       <label class="block text-sm text-gray-600 mb-1">ソート</label>
-      <select name="sort_by" class="input-field">
+      <select name="sort_by" class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
         <option value="created_at_desc" {% if sort_by == "created_at_desc" %}selected{% endif %}>登録日（新しい順）</option>
         <option value="created_at_asc"  {% if sort_by == "created_at_asc"  %}selected{% endif %}>登録日（古い順）</option>
         <option value="word_asc"        {% if sort_by == "word_asc"        %}selected{% endif %}>アルファベット（A→Z）</option>
@@ -26,61 +43,92 @@
         <option value="accuracy_asc"    {% if sort_by == "accuracy_asc"    %}selected{% endif %}>正答率（低い順）</option>
       </select>
     </div>
-    <button type="submit" class="btn-secondary">絞り込む</button>
+    <button type="submit" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition">絞り込む</button>
     {% if search %}
-      <a href="/words" class="btn-ghost">クリア</a>
+      <a href="/words" class="px-4 py-2 text-gray-600 hover:bg-gray-100 text-sm font-medium rounded-lg transition">クリア</a>
     {% endif %}
   </form>
 
-  <!-- 単語数 -->
-  <p class="text-sm text-gray-500">{{ words|length }} 件</p>
+  <!-- 単語数・一括削除バー -->
+  <div class="flex items-center justify-between">
+    <p class="text-sm text-gray-500">{{ words|length }} 件</p>
+
+    <!-- 選択中のみ表示される削除バー -->
+    <div x-show="selectedCount > 0" x-cloak
+         class="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
+      <span class="text-sm text-red-700 font-medium" x-text="selectedCount + ' 件を選択中'"></span>
+      <button type="button" @click="confirmDelete()"
+              class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg transition">
+        🗑️ 削除する
+      </button>
+    </div>
+  </div>
 
   <!-- 単語テーブル -->
   {% if words %}
-  <div class="bg-white rounded-xl shadow overflow-x-auto">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
-        <tr>
-          <th class="px-4 py-3 text-left">単語</th>
-          <th class="px-4 py-3 text-left">品詞</th>
-          <th class="px-4 py-3 text-left">意味</th>
-          <th class="px-4 py-3 text-center">正答率</th>
-          <th class="px-4 py-3 text-center">回答数</th>
-          <th class="px-4 py-3 text-left">登録日</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        {% for word in words %}
-        <tr class="hover:bg-blue-50 cursor-pointer transition"
-            onclick="location.href='/words/{{ word.id }}'">
-          <td class="px-4 py-3 font-semibold text-blue-700">{{ word.word }}</td>
-          <td class="px-4 py-3 text-gray-500 text-xs">{{ word.part_of_speech or "—" }}</td>
-          <td class="px-4 py-3 text-gray-700 max-w-xs truncate">{{ word.meaning }}</td>
-          <td class="px-4 py-3 text-center">
-            {% if word.accuracy is not none %}
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium
-                {% if word.accuracy >= 80 %}bg-green-100 text-green-700
-                {% elif word.accuracy >= 50 %}bg-yellow-100 text-yellow-700
-                {% else %}bg-red-100 text-red-700{% endif %}">
-                {{ word.accuracy }}%
-              </span>
-            {% else %}
-              <span class="text-gray-400 text-xs">未テスト</span>
-            {% endif %}
-          </td>
-          <td class="px-4 py-3 text-center text-gray-500">{{ word.quiz_count }}</td>
-          <td class="px-4 py-3 text-gray-400">{{ word.created_at.strftime('%Y/%m/%d') }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <form id="bulk-delete-form" method="post" action="/words/bulk-delete">
+    <div class="bg-white rounded-xl shadow overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+          <tr>
+            <!-- 全選択チェックボックス -->
+            <th class="px-4 py-3 w-10">
+              <input type="checkbox"
+                     @change="toggleAll($event)"
+                     class="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                     title="すべて選択">
+            </th>
+            <th class="px-4 py-3 text-left">単語</th>
+            <th class="px-4 py-3 text-left">品詞</th>
+            <th class="px-4 py-3 text-left">意味</th>
+            <th class="px-4 py-3 text-center">正答率</th>
+            <th class="px-4 py-3 text-center">回答数</th>
+            <th class="px-4 py-3 text-left">登録日</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for word in words %}
+          <tr class="hover:bg-blue-50 transition cursor-pointer"
+              onclick="location.href='/words/{{ word.id }}'">
+            <!-- チェックボックス（クリックが行選択に伝播しないよう stop） -->
+            <td class="px-4 py-3" onclick="event.stopPropagation()">
+              <input type="checkbox"
+                     name="word_ids"
+                     value="{{ word.id }}"
+                     @change="updateCount()"
+                     class="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer">
+            </td>
+            <td class="px-4 py-3 font-semibold text-blue-700">{{ word.word }}</td>
+            <td class="px-4 py-3 text-gray-500 text-xs">{{ word.part_of_speech or "—" }}</td>
+            <td class="px-4 py-3 text-gray-700 max-w-xs truncate">{{ word.meaning }}</td>
+            <td class="px-4 py-3 text-center">
+              {% if word.accuracy is not none %}
+                <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                  {% if word.accuracy >= 80 %}bg-green-100 text-green-700
+                  {% elif word.accuracy >= 50 %}bg-yellow-100 text-yellow-700
+                  {% else %}bg-red-100 text-red-700{% endif %}">
+                  {{ word.accuracy }}%
+                </span>
+              {% else %}
+                <span class="text-gray-400 text-xs">未テスト</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-center text-gray-500">{{ word.quiz_count }}</td>
+            <td class="px-4 py-3 text-gray-400">{{ word.created_at.strftime('%Y/%m/%d') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+
   {% else %}
   <div class="bg-white rounded-xl shadow p-12 text-center text-gray-400">
     <div class="text-5xl mb-3">📭</div>
     <p class="text-lg">単語がまだ登録されていません</p>
-    <a href="/words/add" class="mt-4 inline-block btn-primary">最初の単語を追加する</a>
+    <a href="/words/add" class="mt-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition">最初の単語を追加する</a>
   </div>
   {% endif %}
+
 </div>
 {% endblock %}

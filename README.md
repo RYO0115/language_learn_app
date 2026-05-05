@@ -42,10 +42,10 @@ AI（Claude または Gemini）が意味・発音・例文を自動生成し、�
 **2. API キーを発行**
 
 
-[API Key Gen Window](docs/screenshots/00_00_gemini_apikey.png)
-[Press API Key Gen Button](docs/screenshots/00_01_gemini_apikey.png)
-[Select API Key Gen](docs/screenshots/00_02_gemini_apikey.png)
-[Copy API Key](docs/screenshots/00_03_gemini_apikey.png)
+![API Key Gen Window](docs/screenshots/00_00_gemini_apikey.png)
+![Press API Key Gen Button](docs/screenshots/00_01_gemini_apikey.png)
+![Select API Key Gen](docs/screenshots/00_02_gemini_apikey.png)
+![Copy API Key](docs/screenshots/00_03_gemini_apikey.png)
 
 **3. `.env` に貼り付ける**
 
@@ -128,21 +128,21 @@ uv run uvicorn language_learn.main:app --reload
 ### Step 1 — 英単語を入力して生成ボタンを押す
 
 
-[Add Word](docs/screenshots/02_00_add_word_input.png)
+![Add Word](docs/screenshots/02_00_add_word_input.png)
 
 ### Step 2 — 生成された情報を確認・編集する
 
 AI が以下の情報を自動入力します。内容はすべて編集できます。
 
 
-[Add Generated Info](docs/screenshots/03_add_generated_info.png)
+![Add Generated Info](docs/screenshots/03_add_generated_info.png)
 
 ### Step 3 — 出典情報を入力する（任意）
 
 「3. 出典情報」セクションを展開すると、この単語をどこで見かけたかを記録できます。
 
 
-[Add Word Source](docs/screenshots/04_add_word_source.png)
+![Add Word Source](docs/screenshots/04_add_word_source.png)
 
 **対応している出典の種類：**
 
@@ -172,7 +172,7 @@ AI が以下の情報を自動入力します。内容はすべて編集でき�
 登録した単語の一覧を確認・管理できます。
 
 
-[Word List](docs/screenshots/05_word_list.png)
+![Word List](docs/screenshots/05_word_list.png)
 
 **ソートの種類：**
 
@@ -200,7 +200,7 @@ AI が以下の情報を自動入力します。内容はすべて編集でき�
 このページでは意味や例文の確認だけではなく、単語や単語を使った例文の発音も確認できます。
 
 
-[Word Detail](docs/screenshots/06_word_detail.png)
+![Word Detail](docs/screenshots/06_word_detail.png)
 
 ---
 
@@ -213,11 +213,11 @@ AI が以下の情報を自動入力します。内容はすべて編集でき�
 ### テスト開始画面
 
 
-[Quiz Start](docs/screenshots/07_quiz_start.png)
+![Quiz Start](docs/screenshots/07_quiz_start.png)
 
 ### 問題画面（Step 1: 単語を見て考える）
 
-[Quiz Question](docs/screenshots/08_quiz_question.png)
+![Quiz Question](docs/screenshots/08_quiz_question.png)
 
 ### 問題画面（Step 2: 意味を確認して回答する）
 
@@ -225,13 +225,13 @@ AI が以下の情報を自動入力します。内容はすべて編集でき�
 覚えていたかどうかを **自己申告** してください。
 
 
-[Quiz Answer](docs/screenshots/09_quiz_answer.png)
+![Quiz Answer](docs/screenshots/09_quiz_answer.png)
 
 ### 結果画面
 
 20問回答し終わると結果が表示されます。
 
-[Quiz Resut](docs/screenshots/10_quiz_result.png)
+![Quiz Resut](docs/screenshots/10_quiz_result.png)
 
 **出題の優先順位：**
 
@@ -254,7 +254,7 @@ AI が以下の情報を自動入力します。内容はすべて編集でき�
 連続学習日数と過去の学習履歴をカレンダーで確認できます。
 
 
-[Streak Calender](docs/screenshots/11_streak_calendar.png)
+![Streak Calender](docs/screenshots/11_streak_calendar.png)
 
 **ストリーク（連続学習日数）の仕組み：**
 
@@ -271,7 +271,7 @@ AI が以下の情報を自動入力します。内容はすべて編集でき�
 単語帳データのバックアップや、別の端末への移行ができます。
 
 
-[Import Export](docs/screenshots/12_export_import.png)
+![Import Export](docs/screenshots/12_export_import.png)
 
 ### エクスポート形式の違い
 

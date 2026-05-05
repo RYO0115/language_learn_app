@@ -14,18 +14,24 @@
   <link rel="stylesheet" href="/static/css/app.css">
 
   <!-- 発音機能（Web Speech API）
-       外部ファイルへの依存を避けてグローバルスコープに確実に定義する。
-
        音声選択の優先順位:
-         1. Google US English  — Chrome のネットワーク音声（高品質）
-         2. Samantha           — Safari / macOS 標準の高品質女性音声
-         3. Karen / Victoria   — macOS 代替音声
-         以降は en-US、en-* の順にフォールバック -->
+         US: Google US English → Samantha → Karen → Victoria
+         UK: Google UK English Female → Daniel → Google UK English Male -->
   <script>
     (function () {
+      // ── ロケール設定 ─────────────────────────────────────────────────────────
+      // localStorage でページをまたいで設定を保持する（デフォルト: en-US）
+      var _locale = localStorage.getItem("tts-locale") || "en-US";
+
+      // ロケールごとの優先音声名リスト
+      var VOICE_PREFS = {
+        "en-US": ["Google US English", "Samantha", "Karen", "Victoria", "Moira"],
+        "en-GB": ["Google UK English Female", "Daniel", "Google UK English Male"],
+      };
+
+      // ── 音声リスト ────────────────────────────────────────────────────────────
       var _ttsVoices = [];
 
-      // 音声リストを初期化する。Chrome は onvoiceschanged で非同期に追加される。
       function _loadVoices() {
         if (!window.speechSynthesis) return;
         _ttsVoices = speechSynthesis.getVoices();
@@ -35,35 +41,30 @@
         speechSynthesis.onvoiceschanged = _loadVoices;
       }
 
-      // 優先音声名リスト
-      // Chrome: "Google US English" が高品質ネットワーク音声
-      // Safari/macOS: "Samantha" が標準の高品質女性音声
-      var PREFERRED_VOICE_NAMES = [
-        "Google US English",
-        "Samantha",
-        "Karen",
-        "Victoria",
-        "Moira",
-      ];
-
+      // ── 音声選択 ──────────────────────────────────────────────────────────────
       function _selectVoice(voices) {
-        for (var i = 0; i < PREFERRED_VOICE_NAMES.length; i++) {
+        var preferred = VOICE_PREFS[_locale] || VOICE_PREFS["en-US"];
+        // 優先名リストから順に検索
+        for (var i = 0; i < preferred.length; i++) {
           for (var j = 0; j < voices.length; j++) {
-            if (voices[j].name === PREFERRED_VOICE_NAMES[i]) return voices[j];
+            if (voices[j].name === preferred[i]) return voices[j];
           }
         }
+        // フォールバック: 選択中ロケールに合う音声
         for (var i = 0; i < voices.length; i++) {
-          if (voices[i].lang === "en-US") return voices[i];
+          if (voices[i].lang === _locale) return voices[i];
         }
+        // フォールバック: 英語系の任意の音声
         for (var i = 0; i < voices.length; i++) {
           if (voices[i].lang.indexOf("en") === 0) return voices[i];
         }
         return null;
       }
 
+      // ── 発話実行 ──────────────────────────────────────────────────────────────
       function _doSpeak(text, rate) {
         var u = new SpeechSynthesisUtterance(text);
-        u.lang = "en-US";
+        u.lang = _locale;   // 選択中のロケールで発話
         u.rate = rate;
         u.pitch = 1.0;
         var voices = _ttsVoices.length > 0 ? _ttsVoices : speechSynthesis.getVoices();
@@ -74,10 +75,7 @@
 
       /**
        * 英語テキストを音声で読み上げるグローバル関数。
-       * ボタンの onclick から呼び出す: onclick="pronounce(this.dataset.word)"
-       *
        * Chrome バグ対策: speaking 中のみ cancel() + 200ms 待機。
-       * 再生中でなければ即座に speak() を呼ぶ。
        */
       window.pronounce = function (text, rate) {
         rate = rate || 1.0;
@@ -92,6 +90,31 @@
           _doSpeak(text, rate);
         }
       };
+
+      // ── US / UK トグル ────────────────────────────────────────────────────────
+
+      // トグルボタンの表示を現在のロケールに合わせて更新する
+      function _updateToggleBtn() {
+        var btn = document.getElementById("locale-toggle-btn");
+        if (!btn) return;
+        if (_locale === "en-US") {
+          btn.textContent = "🇺🇸 US";
+          btn.title = "クリックしてイギリス英語（UK）に切り替え";
+        } else {
+          btn.textContent = "🇬🇧 UK";
+          btn.title = "クリックしてアメリカ英語（US）に切り替え";
+        }
+      }
+
+      /** US / UK を切り替えてボタン表示を更新するグローバル関数 */
+      window.toggleLocale = function () {
+        _locale = _locale === "en-US" ? "en-GB" : "en-US";
+        localStorage.setItem("tts-locale", _locale);
+        _updateToggleBtn();
+      };
+
+      // DOM 構築後にボタン表示を初期化する
+      document.addEventListener("DOMContentLoaded", _updateToggleBtn);
     })();
   </script>
 </head>
@@ -103,8 +126,21 @@
       <a href="/" class="text-xl font-bold tracking-tight hover:opacity-80">
         📚 単語帳アプリ
       </a>
-      <div class="flex gap-3 text-sm font-medium">
+      <div class="flex items-center gap-2 text-sm font-medium">
+        <!-- ダッシュボード -->
         <a href="/" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">ダッシュボード</a>
+
+        <!-- US / UK 発音切り替えボタン（ダッシュボードの横） -->
+        <button id="locale-toggle-btn"
+                onclick="toggleLocale()"
+                class="px-3 py-2 rounded-lg bg-blue-800 hover:bg-blue-700 border border-blue-500 text-white text-xs font-bold tracking-wide transition-colors duration-150"
+                title="発音アクセントを切り替え">
+          🇺🇸 US
+        </button>
+
+        <!-- 区切り線 -->
+        <div class="w-px h-5 bg-blue-400 opacity-50 mx-1"></div>
+
         <a href="/words" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">単語帳</a>
         <a href="/quiz" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">テスト</a>
         <a href="/streak" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">実績</a>

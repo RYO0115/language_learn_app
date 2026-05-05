@@ -14,15 +14,18 @@
   <link rel="stylesheet" href="/static/css/app.css">
 
   <!-- 発音機能（Web Speech API）
-       外部ファイルに依存せず確実にグローバルスコープに定義するためインラインで記述する。
-       Chrome は外部スクリプトの読み込みタイミングによって関数が未定義になる場合があるため。 -->
+       外部ファイルへの依存を避けてグローバルスコープに確実に定義する。
+
+       音声選択の優先順位:
+         1. Google US English  — Chrome のネットワーク音声（高品質）
+         2. Samantha           — Safari / macOS 標準の高品質女性音声
+         3. Karen / Victoria   — macOS 代替音声
+         以降は en-US、en-* の順にフォールバック -->
   <script>
     (function () {
-      // en-US 音声リストのキャッシュ
       var _ttsVoices = [];
 
-      // ページロード時に音声リストを初期化。
-      // Chrome は非同期読み込みのため onvoiceschanged でも更新する。
+      // 音声リストを初期化する。Chrome は onvoiceschanged で非同期に追加される。
       function _loadVoices() {
         if (!window.speechSynthesis) return;
         _ttsVoices = speechSynthesis.getVoices();
@@ -32,31 +35,40 @@
         speechSynthesis.onvoiceschanged = _loadVoices;
       }
 
-      // 実際に発話を実行する内部関数
+      // 優先音声名リスト
+      // Chrome: "Google US English" が高品質ネットワーク音声
+      // Safari/macOS: "Samantha" が標準の高品質女性音声
+      var PREFERRED_VOICE_NAMES = [
+        "Google US English",
+        "Samantha",
+        "Karen",
+        "Victoria",
+        "Moira",
+      ];
+
+      function _selectVoice(voices) {
+        for (var i = 0; i < PREFERRED_VOICE_NAMES.length; i++) {
+          for (var j = 0; j < voices.length; j++) {
+            if (voices[j].name === PREFERRED_VOICE_NAMES[i]) return voices[j];
+          }
+        }
+        for (var i = 0; i < voices.length; i++) {
+          if (voices[i].lang === "en-US") return voices[i];
+        }
+        for (var i = 0; i < voices.length; i++) {
+          if (voices[i].lang.indexOf("en") === 0) return voices[i];
+        }
+        return null;
+      }
+
       function _doSpeak(text, rate) {
         var u = new SpeechSynthesisUtterance(text);
         u.lang = "en-US";
         u.rate = rate;
         u.pitch = 1.0;
-
-        // en-US 音声を優先選択。見つからなければブラウザの既定音声で再生する。
         var voices = _ttsVoices.length > 0 ? _ttsVoices : speechSynthesis.getVoices();
-        var voice = null;
-        for (var i = 0; i < voices.length; i++) {
-          if (voices[i].lang === "en-US" && voices[i].localService) { voice = voices[i]; break; }
-        }
-        if (!voice) {
-          for (var i = 0; i < voices.length; i++) {
-            if (voices[i].lang === "en-US") { voice = voices[i]; break; }
-          }
-        }
-        if (!voice) {
-          for (var i = 0; i < voices.length; i++) {
-            if (voices[i].lang.indexOf("en") === 0) { voice = voices[i]; break; }
-          }
-        }
+        var voice = _selectVoice(voices);
         if (voice) u.voice = voice;
-
         speechSynthesis.speak(u);
       }
 
@@ -64,8 +76,8 @@
        * 英語テキストを音声で読み上げるグローバル関数。
        * ボタンの onclick から呼び出す: onclick="pronounce(this.dataset.word)"
        *
-       * Chrome バグ対策: speaking 中は cancel() + 200ms 待機してから再生。
-       * 再生中でなければ即座に再生（cancel() を挟まないことで Chrome のドロップバグを回避）。
+       * Chrome バグ対策: speaking 中のみ cancel() + 200ms 待機。
+       * 再生中でなければ即座に speak() を呼ぶ。
        */
       window.pronounce = function (text, rate) {
         rate = rate || 1.0;

@@ -23,24 +23,47 @@ document.addEventListener("submit", (e) => {
 
 // ── 発音機能（Web Speech API） ────────────────────────────────────────────────
 
-// 音声リストをモジュールレベルでキャッシュする。
-// Chrome では getVoices() が初回空を返し onvoiceschanged で非同期に読み込まれる。
-// iOS Safari ではページロード時の同期取得で概ね取得できる。
+// 音声リストをキャッシュする変数。
+// Chrome は getVoices() が初回空のため onvoiceschanged で非同期に更新する。
+// Safari はページロード時の同期取得で取得できる。
 let _ttsVoices = [];
 
 window.addEventListener("load", () => {
   if (!window.speechSynthesis) return;
-  // 同期取得を試みる（Safari ではここで取得できる）
   _ttsVoices = speechSynthesis.getVoices();
-  // Chrome 向け: 非同期読み込み完了時にキャッシュを更新する
   speechSynthesis.onvoiceschanged = () => {
     _ttsVoices = speechSynthesis.getVoices();
   };
 });
 
 /**
+ * 実際に発話を実行する内部関数。
+ * utterance の作成と speak() 呼び出しをまとめる。
+ */
+function _doSpeak(text, rate) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.rate = rate;
+  utterance.pitch = 1.0;
+
+  // キャッシュから en-US 音声を選択。取得できない場合はブラウザの既定音声で再生する。
+  const voices = _ttsVoices.length > 0 ? _ttsVoices : speechSynthesis.getVoices();
+  const voice =
+    voices.find((v) => v.lang === "en-US" && v.localService) ||
+    voices.find((v) => v.lang === "en-US") ||
+    voices.find((v) => v.lang.startsWith("en"));
+  if (voice) utterance.voice = voice;
+
+  speechSynthesis.speak(utterance);
+}
+
+/**
  * 英語テキストを音声で読み上げる。
  * ボタンの data-word / data-text 属性から取得したテキストを渡すこと。
+ *
+ * Chrome 既知バグ対策:
+ *   cancel() を常に呼ぶと直後の speak() が無視されることがある。
+ *   「再生中のときのみキャンセルして 200ms 待機、それ以外は即座に再生」する方式を採用。
  *
  * @param {string} text  読み上げるテキスト
  * @param {number} rate  再生速度（1.0 = 通常、0.6 = ゆっくり）
@@ -53,23 +76,13 @@ function pronounce(text, rate) {
     return;
   }
 
-  // 再生中があればキャンセルする
-  speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = rate;
-  utterance.pitch = 1.0;
-
-  // キャッシュ済みの音声から en-US を選択（未取得の場合はブラウザ既定音声で再生）
-  const voice =
-    _ttsVoices.find((v) => v.lang === "en-US" && v.localService) ||
-    _ttsVoices.find((v) => v.lang === "en-US") ||
-    _ttsVoices.find((v) => v.lang.startsWith("en"));
-  if (voice) utterance.voice = voice;
-
-  // Chrome 既知バグ対策: cancel() 直後の speak() が無視される場合があるため
-  // 100ms 待ってから再生する。
-  // iOS Safari もこの時間内であればユーザージェスチャーの文脈が保持される。
-  setTimeout(() => speechSynthesis.speak(utterance), 100);
+  if (speechSynthesis.speaking) {
+    // 再生中の場合: キャンセルしてから 200ms 待って再生
+    // （Chrome は cancel() 直後の speak() を無視するバグがある）
+    speechSynthesis.cancel();
+    setTimeout(() => _doSpeak(text, rate), 200);
+  } else {
+    // 再生中でない場合: 即座に再生（Chrome でも確実に動作する）
+    _doSpeak(text, rate);
+  }
 }

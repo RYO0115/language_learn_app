@@ -316,34 +316,7 @@ AI が以下の情報を自動入力します。内容はすべて編集でき�
 
 ---
 
-## スクリーンショットの追加方法
 
-上記の `docs/screenshots/` 内のパスにスクリーンショットを保存すると、README に画像が表示されます。
-
-```bash
-# macOS でスクリーンショットを撮影する例
-screencapture -x docs/screenshots/01_dashboard.png
-
-# または Command + Shift + 4 でブラウザの範囲を選択して撮影し、
-# docs/screenshots/ フォルダに移動してください
-```
-
-| ファイル名 | 対象画面 |
-|-----------|---------|
-| `01_dashboard.png` | ダッシュボード |
-| `02_add_word_input.png` | 単語追加（入力前） |
-| `03_add_word_generated.png` | 単語追加（AI生成後） |
-| `04_add_word_source.png` | 単語追加（出典情報） |
-| `05_word_list.png` | 単語帳一覧 |
-| `06_word_detail.png` | 単語詳細 |
-| `07_quiz_start.png` | テスト開始画面 |
-| `08_quiz_question.png` | テスト問題（意味確認前） |
-| `09_quiz_answer.png` | テスト問題（意味確認後） |
-| `10_quiz_result.png` | テスト結果 |
-| `11_streak_calendar.png` | 実績カレンダー |
-| `12_export_import.png` | エクスポート/インポート |
-
----
 
 ## ディレクトリ構成
 

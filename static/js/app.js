@@ -2,7 +2,6 @@
 // HTMX フック・UI ユーティリティを定義する
 
 // HTMX のリクエスト完了後に Alpine.js のコンポーネントを再初期化する
-// （HTMX がコンテンツを入れ替えた後も Alpine のデータバインドが正常に動作するよう保証）
 document.addEventListener("htmx:afterSettle", () => {
   if (window.Alpine) {
     document.querySelectorAll("[x-data]").forEach((el) => {
@@ -24,18 +23,24 @@ document.addEventListener("submit", (e) => {
 
 // ── 発音機能（Web Speech API） ────────────────────────────────────────────────
 
-// ページロード時に音声リストを事前初期化する。
-// iOS Safari は初回呼び出し時に音声リストが空になるため、
-// ユーザーがボタンを押す前に getVoices() をトリガーしておく。
+// 音声リストをモジュールレベルでキャッシュする。
+// Chrome では getVoices() が初回空を返し onvoiceschanged で非同期に読み込まれる。
+// iOS Safari ではページロード時の同期取得で概ね取得できる。
+let _ttsVoices = [];
+
 window.addEventListener("load", () => {
-  if (window.speechSynthesis) {
-    speechSynthesis.getVoices();
-  }
+  if (!window.speechSynthesis) return;
+  // 同期取得を試みる（Safari ではここで取得できる）
+  _ttsVoices = speechSynthesis.getVoices();
+  // Chrome 向け: 非同期読み込み完了時にキャッシュを更新する
+  speechSynthesis.onvoiceschanged = () => {
+    _ttsVoices = speechSynthesis.getVoices();
+  };
 });
 
 /**
  * 英語テキストを音声で読み上げる。
- * ボタンの data-text / data-word 属性からテキストを取得して呼び出す。
+ * ボタンの data-word / data-text 属性から取得したテキストを渡すこと。
  *
  * @param {string} text  読み上げるテキスト
  * @param {number} rate  再生速度（1.0 = 通常、0.6 = ゆっくり）
@@ -48,7 +53,7 @@ function pronounce(text, rate) {
     return;
   }
 
-  // 再生中の音声があればキャンセルしてから新しく開始する
+  // 再生中があればキャンセルする
   speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
@@ -56,14 +61,15 @@ function pronounce(text, rate) {
   utterance.rate = rate;
   utterance.pitch = 1.0;
 
-  // en-US の音声を優先して選択（ない場合は en-* にフォールバック）
-  // ページロード時に getVoices() を呼んでいるため、ここでは同期的に取得できる
-  const voices = speechSynthesis.getVoices();
+  // キャッシュ済みの音声から en-US を選択（未取得の場合はブラウザ既定音声で再生）
   const voice =
-    voices.find((v) => v.lang === "en-US" && v.localService) ||
-    voices.find((v) => v.lang === "en-US") ||
-    voices.find((v) => v.lang.startsWith("en"));
+    _ttsVoices.find((v) => v.lang === "en-US" && v.localService) ||
+    _ttsVoices.find((v) => v.lang === "en-US") ||
+    _ttsVoices.find((v) => v.lang.startsWith("en"));
   if (voice) utterance.voice = voice;
 
-  speechSynthesis.speak(utterance);
+  // Chrome 既知バグ対策: cancel() 直後の speak() が無視される場合があるため
+  // 100ms 待ってから再生する。
+  // iOS Safari もこの時間内であればユーザージェスチャーの文脈が保持される。
+  setTimeout(() => speechSynthesis.speak(utterance), 100);
 }

@@ -12,6 +12,76 @@
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <!-- カスタム CSS -->
   <link rel="stylesheet" href="/static/css/app.css">
+
+  <!-- 発音機能（Web Speech API）
+       外部ファイルに依存せず確実にグローバルスコープに定義するためインラインで記述する。
+       Chrome は外部スクリプトの読み込みタイミングによって関数が未定義になる場合があるため。 -->
+  <script>
+    (function () {
+      // en-US 音声リストのキャッシュ
+      var _ttsVoices = [];
+
+      // ページロード時に音声リストを初期化。
+      // Chrome は非同期読み込みのため onvoiceschanged でも更新する。
+      function _loadVoices() {
+        if (!window.speechSynthesis) return;
+        _ttsVoices = speechSynthesis.getVoices();
+      }
+      _loadVoices();
+      if (window.speechSynthesis) {
+        speechSynthesis.onvoiceschanged = _loadVoices;
+      }
+
+      // 実際に発話を実行する内部関数
+      function _doSpeak(text, rate) {
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = "en-US";
+        u.rate = rate;
+        u.pitch = 1.0;
+
+        // en-US 音声を優先選択。見つからなければブラウザの既定音声で再生する。
+        var voices = _ttsVoices.length > 0 ? _ttsVoices : speechSynthesis.getVoices();
+        var voice = null;
+        for (var i = 0; i < voices.length; i++) {
+          if (voices[i].lang === "en-US" && voices[i].localService) { voice = voices[i]; break; }
+        }
+        if (!voice) {
+          for (var i = 0; i < voices.length; i++) {
+            if (voices[i].lang === "en-US") { voice = voices[i]; break; }
+          }
+        }
+        if (!voice) {
+          for (var i = 0; i < voices.length; i++) {
+            if (voices[i].lang.indexOf("en") === 0) { voice = voices[i]; break; }
+          }
+        }
+        if (voice) u.voice = voice;
+
+        speechSynthesis.speak(u);
+      }
+
+      /**
+       * 英語テキストを音声で読み上げるグローバル関数。
+       * ボタンの onclick から呼び出す: onclick="pronounce(this.dataset.word)"
+       *
+       * Chrome バグ対策: speaking 中は cancel() + 200ms 待機してから再生。
+       * 再生中でなければ即座に再生（cancel() を挟まないことで Chrome のドロップバグを回避）。
+       */
+      window.pronounce = function (text, rate) {
+        rate = rate || 1.0;
+        if (!window.speechSynthesis) {
+          alert("お使いのブラウザは音声読み上げに対応していません。");
+          return;
+        }
+        if (speechSynthesis.speaking) {
+          speechSynthesis.cancel();
+          setTimeout(function () { _doSpeak(text, rate); }, 200);
+        } else {
+          _doSpeak(text, rate);
+        }
+      };
+    })();
+  </script>
 </head>
 <body class="bg-gray-50 min-h-screen" hx-boost="false">
 

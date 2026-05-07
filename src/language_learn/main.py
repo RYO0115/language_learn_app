@@ -1,5 +1,6 @@
 # アプリケーションエントリーポイント
 # FastAPI アプリの生成・ルーター登録・テンプレート設定・DB 初期化を行う
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -35,6 +36,7 @@ app = FastAPI(title=settings.app_name, debug=settings.debug)
 
 # Jinja2 テンプレートエンジン設定
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+templates.env.globals["app_version"] = _pkg_version("language-learn-app")
 
 # 各フィーチャーのルーターにテンプレートを注入
 words_set_templates(templates)

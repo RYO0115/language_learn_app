@@ -1,0 +1,10 @@
+<div class="flex items-center gap-2 flex-wrap text-sm mt-1">
+  <span class="text-amber-600">⚠️ もしかして:</span>
+  {% for s in suggestions %}
+  <button type="button"
+          onclick="applySuggestion('{{ s }}')"
+          class="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-md hover:bg-amber-100 transition font-medium">
+    {{ s }}
+  </button>
+  {% endfor %}
+</div>

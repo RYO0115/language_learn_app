@@ -107,7 +107,7 @@ uv run uvicorn language_learn.main:app --reload
 アプリ起動後に表示されるトップページです。学習状況の概要を一目で確認できます。
 
 
-[App Dashboard](docs/screenshots/01_dashboard.png)
+![App Dashboard](docs/screenshots/01_dashboard.png)
 
 **表示される情報：**
 

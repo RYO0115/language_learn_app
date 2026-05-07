@@ -26,7 +26,12 @@
           <input type="text" name="word" id="word-input" required autofocus
                  value="{{ form_data.word if form_data else '' }}"
                  placeholder="例: serendipity"
-                 class="input-field w-full text-lg font-semibold">
+                 class="input-field w-full text-lg font-semibold"
+                 hx-post="/api/spell-check"
+                 hx-trigger="blur"
+                 hx-target="#spell-suggestions"
+                 hx-include="this">
+          <div id="spell-suggestions"></div>
         </div>
         <!-- HTMX で AI 生成ボタン -->
         <div class="flex items-end">
@@ -143,9 +148,18 @@
 
 {% block scripts %}
 <script>
+  function applySuggestion(word) {
+    document.getElementById('word-input').value = word;
+    document.getElementById('spell-suggestions').innerHTML = '';
+  }
+
   document.getElementById('word-input').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
+      htmx.ajax('POST', '/api/spell-check', {
+        target: '#spell-suggestions',
+        values: { word: this.value }
+      });
       document.getElementById('ai-generate-btn').click();
     }
   });

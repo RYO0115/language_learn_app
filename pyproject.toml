@@ -22,7 +22,19 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
     "httpx>=0.28.0",
+    "bump-my-version>=0.32.0",
 ]
+
+[tool.bumpversion]
+current_version = "0.1.0"
+commit = true
+tag = true
+tag_name = "v{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
 
 [project.scripts]
 start = "language_learn.main:main"

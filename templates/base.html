@@ -91,30 +91,29 @@
         }
       };
 
-      // ── US / UK トグル ────────────────────────────────────────────────────────
+      // ── US / UK ボタングループ ───────────────────────────────────────────────
+      // 選択中のボタンを暗く（アクティブ）、非選択を薄く（インアクティブ）表示する
 
-      // トグルボタンの表示を現在のロケールに合わせて更新する
-      function _updateToggleBtn() {
-        var btn = document.getElementById("locale-toggle-btn");
-        if (!btn) return;
-        if (_locale === "en-US") {
-          btn.textContent = "🇺🇸 US";
-          btn.title = "クリックしてイギリス英語（UK）に切り替え";
-        } else {
-          btn.textContent = "🇬🇧 UK";
-          btn.title = "クリックしてアメリカ英語（US）に切り替え";
-        }
+      var CLS_ACTIVE   = "px-3 py-1.5 text-xs font-bold bg-blue-900 text-white transition-colors duration-150";
+      var CLS_INACTIVE = "px-3 py-1.5 text-xs font-bold bg-blue-600 text-blue-300 hover:bg-blue-700 hover:text-white transition-colors duration-150";
+
+      function _updateLocaleButtons() {
+        var btnUS = document.getElementById("btn-locale-us");
+        var btnUK = document.getElementById("btn-locale-uk");
+        if (!btnUS || !btnUK) return;
+        btnUS.className = _locale === "en-US" ? CLS_ACTIVE : CLS_INACTIVE;
+        btnUK.className = _locale === "en-GB" ? CLS_ACTIVE : CLS_INACTIVE;
       }
 
-      /** US / UK を切り替えてボタン表示を更新するグローバル関数 */
-      window.toggleLocale = function () {
-        _locale = _locale === "en-US" ? "en-GB" : "en-US";
+      /** 指定ロケールに設定してボタン表示を更新するグローバル関数 */
+      window.setLocale = function (locale) {
+        _locale = locale;
         localStorage.setItem("tts-locale", _locale);
-        _updateToggleBtn();
+        _updateLocaleButtons();
       };
 
       // DOM 構築後にボタン表示を初期化する
-      document.addEventListener("DOMContentLoaded", _updateToggleBtn);
+      document.addEventListener("DOMContentLoaded", _updateLocaleButtons);
     })();
   </script>
 </head>
@@ -130,13 +129,20 @@
         <!-- ダッシュボード -->
         <a href="/" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">ダッシュボード</a>
 
-        <!-- US / UK 発音切り替えボタン（ダッシュボードの横） -->
-        <button id="locale-toggle-btn"
-                onclick="toggleLocale()"
-                class="px-3 py-2 rounded-lg bg-blue-800 hover:bg-blue-700 border border-blue-500 text-white text-xs font-bold tracking-wide transition-colors duration-150"
-                title="発音アクセントを切り替え">
-          🇺🇸 US
-        </button>
+        <!-- US / UK 発音切り替えボタングループ（選択中は暗く表示） -->
+        <div class="flex rounded-lg overflow-hidden border border-blue-400" title="発音のアクセントを切り替え">
+          <button id="btn-locale-us"
+                  onclick="setLocale('en-US')"
+                  class="px-3 py-1.5 text-xs font-bold bg-blue-900 text-white transition-colors duration-150">
+            🇺🇸 US
+          </button>
+          <div class="w-px bg-blue-400 opacity-50"></div>
+          <button id="btn-locale-uk"
+                  onclick="setLocale('en-GB')"
+                  class="px-3 py-1.5 text-xs font-bold bg-blue-600 text-blue-300 hover:bg-blue-700 hover:text-white transition-colors duration-150">
+            🇬🇧 UK
+          </button>
+        </div>
 
         <!-- 区切り線 -->
         <div class="w-px h-5 bg-blue-400 opacity-50 mx-1"></div>
@@ -160,5 +166,6 @@
   </footer>
 
   <script src="/static/js/app.js"></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

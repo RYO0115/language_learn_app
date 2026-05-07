@@ -23,14 +23,14 @@
       <div class="flex gap-3">
         <div class="flex-1">
           <label class="block text-sm text-gray-600 mb-1">英単語 <span class="text-red-500">*</span></label>
-          <input type="text" name="word" id="word-input" required
+          <input type="text" name="word" id="word-input" required autofocus
                  value="{{ form_data.word if form_data else '' }}"
                  placeholder="例: serendipity"
                  class="input-field w-full text-lg font-semibold">
         </div>
         <!-- HTMX で AI 生成ボタン -->
         <div class="flex items-end">
-          <button type="button"
+          <button type="button" id="ai-generate-btn"
                   hx-post="/api/ai/generate"
                   hx-include="#word-input"
                   hx-target="#ai-fields"
@@ -139,4 +139,15 @@
 
   </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('word-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('ai-generate-btn').click();
+    }
+  });
+</script>
 {% endblock %}

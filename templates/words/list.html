@@ -98,7 +98,15 @@
                      @change="updateCount()"
                      class="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer">
             </td>
-            <td class="px-4 py-3 font-semibold text-blue-700">{{ word.word }}</td>
+            <td class="px-4 py-3 font-semibold text-blue-700" onclick="event.stopPropagation()">
+              <div class="flex items-center gap-2">
+                <a href="/words/{{ word.id }}" class="hover:underline">{{ word.word }}</a>
+                <button onclick="pronounce(this.dataset.word)"
+                        data-word="{{ word.word }}"
+                        class="text-blue-300 hover:text-blue-600 transition text-base leading-none flex-shrink-0"
+                        title="発音を聞く">🔊</button>
+              </div>
+            </td>
             <td class="px-4 py-3 text-gray-500 text-xs">{{ word.part_of_speech or "—" }}</td>
             <td class="px-4 py-3 text-gray-700 max-w-xs truncate">{{ word.meaning }}</td>
             <td class="px-4 py-3 text-center">

@@ -24,7 +24,7 @@
         <div class="flex-1">
           <label class="block text-sm text-gray-600 mb-1">英単語 <span class="text-red-500">*</span></label>
           <input type="text" name="word" id="word-input" required autofocus
-                 value="{{ form_data.word if form_data else '' }}"
+                 value="{{ form_data.word if form_data else (initial_word or '') }}"
                  placeholder="例: serendipity"
                  class="input-field w-full text-lg font-semibold"
                  hx-post="/api/spell-check"

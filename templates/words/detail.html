@@ -154,26 +154,33 @@
         {% endfor %}
       </datalist>
 
-      <!-- 出典追加 -->
+      <!-- 出典情報（既存の最初の出典を初期値として表示） -->
+      {% set src = word.sources[0] if word.sources else none %}
       <div>
-        <p class="text-sm font-semibold text-gray-600 mb-2">出典情報を追加</p>
+        <p class="text-sm font-semibold text-gray-600 mb-2">出典情報</p>
         <div class="grid grid-cols-2 gap-3">
           <select name="source_type" class="input-field">
-            <option value="book">📚 書籍</option>
-            <option value="website">🌐 ウェブサイト</option>
-            <option value="video">🎬 動画</option>
-            <option value="other">📌 その他</option>
+            <option value="book"   {% if src and src.source_type == 'book'    %}selected{% endif %}>📚 書籍</option>
+            <option value="website"{% if src and src.source_type == 'website' %}selected{% endif %}>🌐 ウェブサイト</option>
+            <option value="video"  {% if src and src.source_type == 'video'   %}selected{% endif %}>🎬 動画</option>
+            <option value="other"  {% if src and src.source_type == 'other' or not src %}selected{% endif %}>📌 その他</option>
           </select>
           <input type="text" name="source_title"
                  list="edit-source-title-list"
+                 value="{{ src.title if src else '' }}"
                  placeholder="タイトル" class="input-field">
         </div>
         <input type="text" name="source_url"
                list="edit-source-url-list"
+               value="{{ src.url if src else '' }}"
                placeholder="URL" class="input-field w-full mt-2">
         <div class="grid grid-cols-2 gap-3 mt-2">
-          <input type="text" name="source_page" placeholder="ページ数" class="input-field">
-          <input type="text" name="source_detail" placeholder="メモ" class="input-field">
+          <input type="text" name="source_page"
+                 value="{{ src.page_number if src else '' }}"
+                 placeholder="ページ数" class="input-field">
+          <input type="text" name="source_detail"
+                 value="{{ src.detail if src else '' }}"
+                 placeholder="メモ" class="input-field">
         </div>
       </div>
 

@@ -207,8 +207,11 @@ def update_word(db: Session, word_id: int, data: WordUpdate) -> Word:
                 order=sent_data.order,
             ))
 
-    # 出典情報を追加（既存は保持）
+    # 出典情報を置き換え（既存を全削除してから新規追加）
     if data.source is not None:
+        for src in word.sources:
+            db.delete(src)
+        db.flush()
         db.add(WordSource(
             word_id=word.id,
             source_type=data.source.source_type,

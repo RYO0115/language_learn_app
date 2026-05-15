@@ -23,6 +23,9 @@
       // localStorage でページをまたいで設定を保持する（デフォルト: en-US）
       var _locale = localStorage.getItem("tts-locale") || "en-US";
 
+      // ── 音量設定 ──────────────────────────────────────────────────────────────
+      var _volume = parseFloat(localStorage.getItem("tts-volume") ?? "1.0");
+
       // ロケールごとの優先音声名リスト
       var VOICE_PREFS = {
         "en-US": ["Google US English", "Samantha", "Karen", "Victoria", "Moira"],
@@ -67,6 +70,7 @@
         u.lang = _locale;   // 選択中のロケールで発話
         u.rate = rate;
         u.pitch = 1.0;
+        u.volume = _volume; // 設定中の音量を適用
         var voices = _ttsVoices.length > 0 ? _ttsVoices : speechSynthesis.getVoices();
         var voice = _selectVoice(voices);
         if (voice) u.voice = voice;
@@ -112,8 +116,30 @@
         _updateLocaleButtons();
       };
 
-      // DOM 構築後にボタン表示を初期化する
-      document.addEventListener("DOMContentLoaded", _updateLocaleButtons);
+      // ── 音量アイコン更新 ──────────────────────────────────────────────────────
+      function _volumeIcon(v) {
+        if (v === 0)    return "🔇";
+        if (v <= 0.3)   return "🔈";
+        if (v <= 0.7)   return "🔉";
+        return "🔊";
+      }
+
+      /** 音量を設定して localStorage に保存するグローバル関数 */
+      window.setVolume = function (val) {
+        _volume = parseFloat(val);
+        localStorage.setItem("tts-volume", _volume);
+        var icon = document.getElementById("volume-icon");
+        if (icon) icon.textContent = _volumeIcon(_volume);
+      };
+
+      // DOM 構築後にボタン表示・スライダーを初期化する
+      document.addEventListener("DOMContentLoaded", function () {
+        _updateLocaleButtons();
+        var slider = document.getElementById("volume-slider");
+        if (slider) slider.value = _volume;
+        var icon = document.getElementById("volume-icon");
+        if (icon) icon.textContent = _volumeIcon(_volume);
+      });
     })();
   </script>
 </head>
@@ -143,6 +169,15 @@
                   class="px-3 py-1.5 text-xs font-bold bg-blue-600 text-blue-300 hover:bg-blue-700 hover:text-white transition-colors duration-150">
             🇬🇧 UK
           </button>
+        </div>
+
+        <!-- 音量スライダー -->
+        <div class="flex items-center gap-1.5" title="音量調整">
+          <span id="volume-icon" class="text-sm select-none">🔊</span>
+          <input type="range" id="volume-slider"
+                 min="0" max="1" step="0.05" value="1"
+                 oninput="setVolume(this.value)"
+                 class="volume-slider w-20">
         </div>
 
         <!-- 区切り線 -->

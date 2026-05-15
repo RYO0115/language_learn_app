@@ -1,7 +1,7 @@
 # 言語学習単語帳アプリ プロジェクト設定
 [project]
 name = "language-learn-app"
-version = "0.1.0"
+version = "0.1.4"
 description = "外国語学習単語帳アプリ（日本語話者向け英語学習）"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -21,7 +21,19 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
     "httpx>=0.28.0",
+    "bump-my-version>=0.32.0",
 ]
+
+[tool.bumpversion]
+current_version = "0.1.4"
+commit = true
+tag = true
+tag_name = "v{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
 
 [project.scripts]
 start = "language_learn.main:main"

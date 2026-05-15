@@ -3,9 +3,12 @@
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from spellchecker import SpellChecker
 
 from language_learn.core.exceptions import AIServiceError
 from language_learn.features.ai.service import generate_word_info
+
+_spell = SpellChecker()
 
 router = APIRouter()
 
@@ -39,4 +42,24 @@ def ai_generate(request: Request, word: str = Form(...)):
         request,
         "words/partials/ai_result.html",
         {"result": result, "word": word},
+    )
+
+
+@router.post("/api/spell-check", response_class=HTMLResponse)
+def spell_check(request: Request, word: str = Form(...)):
+    """英単語のスペルチェックを行い、候補を HTML パーシャルで返す。
+
+    単語が辞書に存在する場合は空レスポンスを返す。
+    """
+    word = word.strip()
+    if not word or _spell.known([word]):
+        return HTMLResponse("")
+    candidates = _spell.candidates(word) or set()
+    suggestions = sorted(candidates - {word.lower()})[:3]
+    if not suggestions:
+        return HTMLResponse("")
+    return templates.TemplateResponse(
+        request,
+        "words/partials/spell_suggestions.html",
+        {"suggestions": suggestions},
     )

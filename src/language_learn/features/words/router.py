@@ -43,8 +43,13 @@ def word_list_page(
     search: str = "",
     db: Session = Depends(get_db),
 ):
-    """単語一覧ページを返す。ソート・検索クエリパラメータに対応。"""
+    """単語一覧ページを返す。ソート・検索クエリパラメータに対応。
+    検索語が入力されて結果が0件の場合は新規追加画面へリダイレクトする。
+    """
     words = list_words(db, sort_by=sort_by, search=search)
+    if search.strip() and not words:
+        from urllib.parse import quote
+        return RedirectResponse(url=f"/words/add?word={quote(search.strip())}", status_code=303)
     return templates.TemplateResponse(
         request,
         "words/list.html",
@@ -53,11 +58,13 @@ def word_list_page(
 
 
 @router.get("/words/add", response_class=HTMLResponse)
-def word_add_page(request: Request, db: Session = Depends(get_db)):
-    """単語追加ページを返す。出典情報の入力補完用に過去の候補も渡す。"""
+def word_add_page(request: Request, word: str = "", db: Session = Depends(get_db)):
+    """単語追加ページを返す。出典情報の入力補完用に過去の候補も渡す。
+    word クエリパラメータが渡された場合は入力欄の初期値として使用する。
+    """
     return templates.TemplateResponse(
         request, "words/add.html",
-        {"source_suggestions": get_source_suggestions(db)},
+        {"source_suggestions": get_source_suggestions(db), "initial_word": word},
     )
 
 

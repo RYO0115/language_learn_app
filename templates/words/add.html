@@ -153,14 +153,23 @@
     document.getElementById('spell-suggestions').innerHTML = '';
   }
 
-  document.getElementById('word-input').addEventListener('keydown', function(e) {
+  document.getElementById('word-input').addEventListener('keydown', async function(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
-      htmx.ajax('POST', '/api/spell-check', {
-        target: '#spell-suggestions',
-        values: { word: this.value }
-      });
-      document.getElementById('ai-generate-btn').click();
+      const word = this.value.trim();
+      if (!word) return;
+
+      // 重複・スペルチェックを先に実行し、結果を確認してから AI 生成を判断する
+      const form = new FormData();
+      form.append('word', word);
+      const resp = await fetch('/api/spell-check', { method: 'POST', body: form });
+      const html = await resp.text();
+      document.getElementById('spell-suggestions').innerHTML = html;
+
+      // 重複メッセージが表示された場合は AI 生成を実行しない
+      if (!document.querySelector('#spell-suggestions [data-duplicate]')) {
+        document.getElementById('ai-generate-btn').click();
+      }
     }
   });
 </script>

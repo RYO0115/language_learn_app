@@ -152,21 +152,18 @@
         📚 単語帳アプリ
         <span class="text-xs text-blue-200 font-mono font-normal">v{{ app_version }}</span>
       </a>
-      <div class="flex items-center gap-2 text-sm font-medium">
-        <!-- ダッシュボード -->
-        <a href="/" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">ダッシュボード</a>
-
+      <div class="flex items-center gap-2 text-sm font-medium flex-wrap">
         <!-- US / UK 発音切り替えボタングループ（選択中は暗く表示） -->
         <div class="flex rounded-lg overflow-hidden border border-blue-400" title="発音のアクセントを切り替え">
           <button id="btn-locale-us"
                   onclick="setLocale('en-US')"
-                  class="px-3 py-1.5 text-xs font-bold bg-blue-900 text-white transition-colors duration-150">
+                  class="px-3 py-1.5 text-xs font-bold bg-blue-900 text-white transition-colors duration-150 whitespace-nowrap">
             🇺🇸 US
           </button>
           <div class="w-px bg-blue-400 opacity-50"></div>
           <button id="btn-locale-uk"
                   onclick="setLocale('en-GB')"
-                  class="px-3 py-1.5 text-xs font-bold bg-blue-600 text-blue-300 hover:bg-blue-700 hover:text-white transition-colors duration-150">
+                  class="px-3 py-1.5 text-xs font-bold bg-blue-600 text-blue-300 hover:bg-blue-700 hover:text-white transition-colors duration-150 whitespace-nowrap">
             🇬🇧 UK
           </button>
         </div>
@@ -183,10 +180,10 @@
         <!-- 区切り線 -->
         <div class="w-px h-5 bg-blue-400 opacity-50 mx-1"></div>
 
-        <a href="/words" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">単語帳</a>
-        <a href="/quiz" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">テスト</a>
-        <a href="/streak" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">実績</a>
-        <a href="/export" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">インポート/エクスポート</a>
+        <a href="/words" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">単語帳</a>
+        <a href="/quiz" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">テスト</a>
+        <a href="/streak" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">実績</a>
+        <a href="/export" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">インポート/エクスポート</a>
       </div>
     </div>
   </nav>

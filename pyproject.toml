@@ -28,7 +28,7 @@ dev = [
 [tool.bumpversion]
 current_version = "0.1.8"
 commit = true
-tag = true
+tag = false
 tag_name = "v{new_version}"
 
 [[tool.bumpversion.files]]

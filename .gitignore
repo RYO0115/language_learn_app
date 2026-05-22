@@ -14,8 +14,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -218,7 +218,9 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Language Learn App
-data/
+# ルート直下の data/ (SQLite DB) だけを除外。Flutter の features/*/data/ は含まない
+/data/
+server_app/data/
 .venv/
 
 # Flutter / Dart
@@ -227,6 +229,5 @@ smartphone_app/.flutter-plugins
 smartphone_app/.flutter-plugins-dependencies
 smartphone_app/build/
 smartphone_app/.packages
-smartphone_app/pubspec.lock
 smartphone_app/coverage/
 

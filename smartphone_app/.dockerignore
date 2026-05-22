@@ -1,0 +1,31 @@
+# Docker ビルドに不要なファイルを除外してイメージビルドを高速化
+
+# Flutter ビルド成果物
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# テスト・カバレッジ
+coverage/
+
+# IDE 設定
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker 自身
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# CI
+.github/

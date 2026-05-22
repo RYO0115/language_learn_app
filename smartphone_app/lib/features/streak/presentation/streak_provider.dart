@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/streak_repository.dart';
 import '../domain/study_record.dart';
 
-final streakProvider = FutureProvider<List<StudyRecord>>((ref) {
+final streakProvider = FutureProvider<List<StudyRecord>>((ref) async {
   return ref.watch(streakRepositoryProvider).getAllRecords();
 });
 

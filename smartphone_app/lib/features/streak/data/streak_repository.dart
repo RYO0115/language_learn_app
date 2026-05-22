@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../words/data/word_repository.dart';
-import '../domain/study_record.dart';
+import '../domain/study_record.dart' as model;
 import 'streak_dao.dart';
 
 final streakRepositoryProvider = Provider<StreakRepository>((ref) {
@@ -16,10 +16,10 @@ class StreakRepository {
 
   final StreakDao _dao;
 
-  Future<List<StudyRecord>> getAllRecords() async {
+  Future<List<model.StudyRecord>> getAllRecords() async {
     final rows = await _dao.getAllRecords();
     return rows
-        .map((r) => StudyRecord(
+        .map((r) => model.StudyRecord(
               id: r.id,
               studyDate: r.studyDate,
               wordsStudied: r.wordsStudied,
@@ -46,7 +46,7 @@ class StreakRepository {
     ));
   }
 
-  int calculateCurrentStreak(List<StudyRecord> records) {
+  int calculateCurrentStreak(List<model.StudyRecord> records) {
     if (records.isEmpty) return 0;
     final dates = records.map((r) => r.studyDate).toSet();
     var streak = 0;

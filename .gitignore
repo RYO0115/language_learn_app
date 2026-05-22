@@ -231,3 +231,18 @@ smartphone_app/build/
 smartphone_app/.packages
 smartphone_app/coverage/
 
+# Android (machine-specific / generated)
+smartphone_app/android/local.properties
+smartphone_app/android/**/GeneratedPluginRegistrant.java
+smartphone_app/android/.gradle/
+smartphone_app/android/captures/
+
+# iOS (machine-specific / generated)
+smartphone_app/ios/Flutter/Generated.xcconfig
+smartphone_app/ios/Flutter/flutter_export_environment.sh
+smartphone_app/ios/Flutter/.last_build_id
+smartphone_app/ios/Runner/GeneratedPluginRegistrant.*
+smartphone_app/ios/Flutter/App.framework
+smartphone_app/ios/Flutter/Flutter.framework
+smartphone_app/ios/Flutter/flutter_assets/
+

@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../words/data/word_repository.dart';
-import '../../words/domain/example_sentence.dart';
 import '../../words/domain/word.dart';
-import '../../words/domain/word_source.dart';
 import '../../../core/exceptions/app_exception.dart';
 
 final exportServiceProvider = Provider<ExportService>((ref) {

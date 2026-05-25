@@ -1,0 +1,19 @@
+services:
+  flutter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        FLUTTER_VERSION: "3.22.3"
+    image: language-learn-flutter:3.22.3
+    volumes:
+      # ソースコードをマウント（ホスト側の変更がすぐ反映される）
+      - .:/app
+      # pub-cache をボリューム化して flutter pub get の再ダウンロードを省略
+      - pub_cache:/root/.pub-cache
+    working_dir: /app
+    stdin_open: true
+    tty: true
+
+volumes:
+  pub_cache:

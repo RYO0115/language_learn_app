@@ -1,3 +1,7 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -14,8 +18,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -218,6 +222,31 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Language Learn App
-data/
+# ルート直下の data/ (SQLite DB) だけを除外。Flutter の features/*/data/ は含まない
+/data/
+server_app/data/
 .venv/
+
+# Flutter / Dart
+smartphone_app/.dart_tool/
+smartphone_app/.flutter-plugins
+smartphone_app/.flutter-plugins-dependencies
+smartphone_app/build/
+smartphone_app/.packages
+smartphone_app/coverage/
+
+# Android (machine-specific / generated)
+smartphone_app/android/local.properties
+smartphone_app/android/**/GeneratedPluginRegistrant.java
+smartphone_app/android/.gradle/
+smartphone_app/android/captures/
+
+# iOS (machine-specific / generated)
+smartphone_app/ios/Flutter/Generated.xcconfig
+smartphone_app/ios/Flutter/flutter_export_environment.sh
+smartphone_app/ios/Flutter/.last_build_id
+smartphone_app/ios/Runner/GeneratedPluginRegistrant.*
+smartphone_app/ios/Flutter/App.framework
+smartphone_app/ios/Flutter/Flutter.framework
+smartphone_app/ios/Flutter/flutter_assets/
 

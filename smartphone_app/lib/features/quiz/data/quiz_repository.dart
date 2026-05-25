@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/database/app_database.dart';
+import '../../../core/database/app_database.dart' hide Word, QuizSession, QuizAnswer;
 import '../../../core/utils/date_utils.dart';
 import '../../words/data/word_repository.dart';
 import '../../words/domain/word.dart';

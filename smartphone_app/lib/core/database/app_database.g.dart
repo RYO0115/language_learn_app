@@ -2033,7 +2033,7 @@ final class $$WordsTableReferences
   $$ExampleSentencesTableProcessedTableManager get exampleSentencesRefs {
     final manager =
         $$ExampleSentencesTableTableManager($_db, $_db.exampleSentences)
-            .filter((f) => f.wordId.id($_item.id));
+            .filter((f) => f.wordId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache =
         $_typedResult.readTableOrNull(_exampleSentencesRefsTable($_db));
@@ -2048,7 +2048,7 @@ final class $$WordsTableReferences
 
   $$WordSourcesTableProcessedTableManager get wordSourcesRefs {
     final manager = $$WordSourcesTableTableManager($_db, $_db.wordSources)
-        .filter((f) => f.wordId.id($_item.id));
+        .filter((f) => f.wordId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_wordSourcesRefsTable($_db));
     return ProcessedTableManager(
@@ -2062,7 +2062,7 @@ final class $$WordsTableReferences
 
   $$QuizAnswersTableProcessedTableManager get quizAnswersRefs {
     final manager = $$QuizAnswersTableTableManager($_db, $_db.quizAnswers)
-        .filter((f) => f.wordId.id($_item.id));
+        .filter((f) => f.wordId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_quizAnswersRefsTable($_db));
     return ProcessedTableManager(
@@ -2369,7 +2369,8 @@ class $$WordsTableTableManager extends RootTableManager<
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (exampleSentencesRefs)
-                    await $_getPrefetchedData(
+                    await $_getPrefetchedData<Word, $WordsTable,
+                            ExampleSentence>(
                         currentTable: table,
                         referencedTable: $$WordsTableReferences
                             ._exampleSentencesRefsTable(db),
@@ -2381,7 +2382,7 @@ class $$WordsTableTableManager extends RootTableManager<
                             referencedItems.where((e) => e.wordId == item.id),
                         typedResults: items),
                   if (wordSourcesRefs)
-                    await $_getPrefetchedData(
+                    await $_getPrefetchedData<Word, $WordsTable, WordSource>(
                         currentTable: table,
                         referencedTable:
                             $$WordsTableReferences._wordSourcesRefsTable(db),
@@ -2393,7 +2394,7 @@ class $$WordsTableTableManager extends RootTableManager<
                             referencedItems.where((e) => e.wordId == item.id),
                         typedResults: items),
                   if (quizAnswersRefs)
-                    await $_getPrefetchedData(
+                    await $_getPrefetchedData<Word, $WordsTable, QuizAnswer>(
                         currentTable: table,
                         referencedTable:
                             $$WordsTableReferences._quizAnswersRefsTable(db),
@@ -2453,10 +2454,11 @@ final class $$ExampleSentencesTableReferences extends BaseReferences<
   static $WordsTable _wordIdTable(_$AppDatabase db) => db.words.createAlias(
       $_aliasNameGenerator(db.exampleSentences.wordId, db.words.id));
 
-  $$WordsTableProcessedTableManager? get wordId {
-    if ($_item.wordId == null) return null;
+  $$WordsTableProcessedTableManager get wordId {
+    final $_column = $_itemColumn<int>('word_id')!;
+
     final manager = $$WordsTableTableManager($_db, $_db.words)
-        .filter((f) => f.id($_item.wordId!));
+        .filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_wordIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -2740,10 +2742,11 @@ final class $$WordSourcesTableReferences
   static $WordsTable _wordIdTable(_$AppDatabase db) => db.words
       .createAlias($_aliasNameGenerator(db.wordSources.wordId, db.words.id));
 
-  $$WordsTableProcessedTableManager? get wordId {
-    if ($_item.wordId == null) return null;
+  $$WordsTableProcessedTableManager get wordId {
+    final $_column = $_itemColumn<int>('word_id')!;
+
     final manager = $$WordsTableTableManager($_db, $_db.words)
-        .filter((f) => f.id($_item.wordId!));
+        .filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_wordIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -3047,7 +3050,7 @@ final class $$QuizSessionsTableReferences
 
   $$QuizAnswersTableProcessedTableManager get quizAnswersRefs {
     final manager = $$QuizAnswersTableTableManager($_db, $_db.quizAnswers)
-        .filter((f) => f.sessionId.id($_item.id));
+        .filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_quizAnswersRefsTable($_db));
     return ProcessedTableManager(
@@ -3210,7 +3213,8 @@ class $$QuizSessionsTableTableManager extends RootTableManager<
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (quizAnswersRefs)
-                    await $_getPrefetchedData(
+                    await $_getPrefetchedData<QuizSession, $QuizSessionsTable,
+                            QuizAnswer>(
                         currentTable: table,
                         referencedTable: $$QuizSessionsTableReferences
                             ._quizAnswersRefsTable(db),
@@ -3265,10 +3269,11 @@ final class $$QuizAnswersTableReferences
       db.quizSessions.createAlias(
           $_aliasNameGenerator(db.quizAnswers.sessionId, db.quizSessions.id));
 
-  $$QuizSessionsTableProcessedTableManager? get sessionId {
-    if ($_item.sessionId == null) return null;
+  $$QuizSessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<int>('session_id')!;
+
     final manager = $$QuizSessionsTableTableManager($_db, $_db.quizSessions)
-        .filter((f) => f.id($_item.sessionId!));
+        .filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -3278,10 +3283,11 @@ final class $$QuizAnswersTableReferences
   static $WordsTable _wordIdTable(_$AppDatabase db) => db.words
       .createAlias($_aliasNameGenerator(db.quizAnswers.wordId, db.words.id));
 
-  $$WordsTableProcessedTableManager? get wordId {
-    if ($_item.wordId == null) return null;
+  $$WordsTableProcessedTableManager get wordId {
+    final $_column = $_itemColumn<int>('word_id')!;
+
     final manager = $$WordsTableTableManager($_db, $_db.words)
-        .filter((f) => f.id($_item.wordId!));
+        .filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_wordIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(

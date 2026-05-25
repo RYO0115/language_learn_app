@@ -12,7 +12,7 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     return repo.load();
   }
 
-  Future<void> update(AppSettings settings) async {
+  Future<void> save(AppSettings settings) async {
     state = const AsyncLoading();
     final repo = ref.read(settingsRepositoryProvider);
     await repo.save(settings);

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/exceptions/app_exception.dart';
 import '../../domain/ai_generate_response.dart';
 import 'base_ai_provider.dart';
@@ -10,7 +11,7 @@ class GeminiProvider implements BaseAiProvider {
   final String apiKey;
   final _dio = Dio();
 
-  static const _model = 'gemini-1.5-flash';
+  static const _model = 'gemini-2.5-flash';
   static const _endpoint =
       'https://generativelanguage.googleapis.com/v1beta/models/$_model:generateContent';
 
@@ -28,9 +29,6 @@ class GeminiProvider implements BaseAiProvider {
               ]
             }
           ],
-          'generationConfig': {
-            'responseMimeType': 'application/json',
-          },
         },
         options: Options(
           receiveTimeout: const Duration(seconds: 30),
@@ -39,13 +37,31 @@ class GeminiProvider implements BaseAiProvider {
       );
       final text = response.data['candidates'][0]['content']['parts'][0]['text']
           as String;
-      final json = jsonDecode(text) as Map<String, dynamic>;
+      final jsonStr = _extractJson(text);
+      final json = jsonDecode(jsonStr) as Map<String, dynamic>;
       return AiGenerateResponse.fromJson(json);
     } on DioException catch (e) {
-      throw AiGenerationException(e.message ?? 'Gemini API error');
+      final statusCode = e.response?.statusCode;
+      final body = e.response?.data;
+      debugPrint('[Gemini] HTTP $statusCode | body: $body');
+      String? geminiMessage;
+      if (body is Map) {
+        geminiMessage = body['error']?['message'] as String?;
+      }
+      throw AiGenerationException(
+        '[$statusCode] ${geminiMessage ?? e.message ?? 'Gemini API error'}',
+      );
     } catch (e) {
+      debugPrint('[Gemini] unexpected error: $e');
       throw AiGenerationException(e.toString());
     }
+  }
+
+  String _extractJson(String text) {
+    final start = text.indexOf('{');
+    final end = text.lastIndexOf('}');
+    if (start == -1 || end == -1) return text;
+    return text.substring(start, end + 1);
   }
 
   String _buildPrompt(String word) => '''

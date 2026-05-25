@@ -1,7 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:language_learn_app/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../settings/domain/app_settings.dart';
 import '../../settings/presentation/settings_provider.dart';
 
@@ -98,19 +100,78 @@ class _ApiKeySetupPageState extends ConsumerState<ApiKeySetupPage> {
       googleApiKey: _provider == AiProvider.gemini ? key : null,
       claudeApiKey: _provider == AiProvider.claude ? key : null,
     );
-    await ref.read(settingsProvider.notifier).update(settings);
+    await ref.read(settingsProvider.notifier).save(settings);
     if (mounted) context.go('/');
   }
 }
 
-class _GuideSection extends StatelessWidget {
+class _GuideSection extends StatefulWidget {
   const _GuideSection({required this.provider});
 
   final AiProvider provider;
 
   @override
+  State<_GuideSection> createState() => _GuideSectionState();
+}
+
+class _GuideSectionState extends State<_GuideSection> {
+  late final TapGestureRecognizer _tapRecognizer;
+
+  static const _geminiUrl = 'https://aistudio.google.com/apikey';
+  static const _claudeUrl = 'https://console.anthropic.com';
+
+  String get _url =>
+      widget.provider == AiProvider.gemini ? _geminiUrl : _claudeUrl;
+
+  String get _urlDisplay => widget.provider == AiProvider.gemini
+      ? 'aistudio.google.com/apikey'
+      : 'console.anthropic.com';
+
+  @override
+  void initState() {
+    super.initState();
+    _tapRecognizer = TapGestureRecognizer()..onTap = _openUrl;
+  }
+
+  @override
+  void dispose() {
+    _tapRecognizer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openUrl() async {
+    final uri = Uri.parse(_url);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Widget _buildGuide(BuildContext context, String guide) {
+    final idx = guide.indexOf(_urlDisplay);
+    if (idx == -1) return Text(guide);
+
+    final linkColor = Theme.of(context).colorScheme.primary;
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: guide.substring(0, idx)),
+          TextSpan(
+            text: _urlDisplay,
+            style: TextStyle(
+              color: linkColor,
+              decoration: TextDecoration.underline,
+              decorationColor: linkColor,
+            ),
+            recognizer: _tapRecognizer,
+          ),
+          TextSpan(text: guide.substring(idx + _urlDisplay.length)),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isGemini = widget.provider == AiProvider.gemini;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -123,17 +184,14 @@ class _GuideSection extends StatelessWidget {
           Text('── 取得方法 ──',
               style: Theme.of(context).textTheme.labelSmall),
           const SizedBox(height: 8),
-          if (provider == AiProvider.gemini) ...[
-            Text('【Google Gemini（無料・カード不要）】',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(l10n.geminiGuide),
-          ] else ...[
-            Text('【Anthropic Claude（有料プラン必要）】',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(l10n.claudeGuide),
-          ],
+          Text(
+            isGemini
+                ? '【Google Gemini（無料・カード不要）】'
+                : '【Anthropic Claude（有料プラン必要）】',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          _buildGuide(context, isGemini ? l10n.geminiGuide : l10n.claudeGuide),
         ],
       ),
     );

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../streak/presentation/streak_provider.dart';
-import '../../words/data/word_repository.dart';
+import '../../words/presentation/word_list_provider.dart';
 
 class DashboardData {
   const DashboardData({
@@ -12,8 +12,10 @@ class DashboardData {
   final int currentStreak;
 }
 
-final dashboardProvider = FutureProvider<DashboardData>((ref) async {
-  final wordCount = await ref.watch(wordRepositoryProvider).countWords();
+final dashboardProvider = Provider<AsyncValue<DashboardData>>((ref) {
+  final wordListAsync = ref.watch(wordListProvider);
   final streak = ref.watch(currentStreakProvider);
-  return DashboardData(wordCount: wordCount, currentStreak: streak);
+  return wordListAsync.whenData(
+    (words) => DashboardData(wordCount: words.length, currentStreak: streak),
+  );
 });

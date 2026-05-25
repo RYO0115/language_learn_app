@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:language_learn_app/l10n/app_localizations.dart';
+import '../../../common/widgets/common_app_bar_actions.dart';
 import '../../../core/utils/date_utils.dart';
 import 'streak_provider.dart';
 
@@ -14,7 +15,10 @@ class StreakCalendarPage extends ConsumerWidget {
     final streak = ref.watch(currentStreakProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.streak)),
+      appBar: AppBar(
+        title: Text(l10n.streak),
+        actions: const [CommonAppBarActions()],
+      ),
       body: recordsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),

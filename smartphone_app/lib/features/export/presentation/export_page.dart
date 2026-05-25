@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:language_learn_app/l10n/app_localizations.dart';
+import '../../../common/widgets/common_app_bar_actions.dart';
 import '../data/export_service.dart';
 
 class ExportPage extends ConsumerWidget {
@@ -14,7 +15,10 @@ class ExportPage extends ConsumerWidget {
     final service = ref.watch(exportServiceProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.exportImport)),
+      appBar: AppBar(
+        title: Text(l10n.exportImport),
+        actions: const [CommonAppBarActions()],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:language_learn_app/l10n/app_localizations.dart';
+import '../../../common/widgets/common_app_bar_actions.dart';
 import '../data/quiz_repository.dart';
 import '../../words/data/word_repository.dart';
 
@@ -47,34 +48,50 @@ class QuizResultPage extends ConsumerWidget {
     final resultAsync = ref.watch(_quizResultProvider(sessionId));
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.quizResult)),
+      appBar: AppBar(
+        title: Text(l10n.quizResult),
+        actions: const [CommonAppBarActions()],
+      ),
       body: resultAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (result) => Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(l10n.sessionCompleted,
-                  style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              Text(
+                l10n.sessionCompleted,
+                style: Theme.of(context).textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
               Text(
                 '${(result.rate * 100).toStringAsFixed(0)}%',
                 style: Theme.of(context)
                     .textTheme
-                    .displayMedium
+                    .displayLarge
                     ?.copyWith(
                         color: result.rate >= 0.8
                             ? Colors.green
                             : Colors.orange,
                         fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
-              Text('${result.correctCount} / ${result.total}',
-                  style: Theme.of(context).textTheme.bodyLarge),
+              const SizedBox(height: 8),
+              Text(
+                '${result.correctCount} / ${result.total}',
+                style: Theme.of(context).textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 32),
               if (result.wrongWords.isNotEmpty) ...[
-                Text('不正解の単語',
-                    style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  '不正解の単語',
+                  style: Theme.of(context).textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 8),
                 Expanded(
                   child: ListView.builder(
@@ -85,11 +102,15 @@ class QuizResultPage extends ConsumerWidget {
                     ),
                   ),
                 ),
-              ],
+              ] else
+                const Spacer(),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => context.go('/'),
-                child: const Text('ホームへ'),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => context.go('/'),
+                  child: const Text('ホームへ'),
+                ),
               ),
             ],
           ),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:language_learn_app/l10n/app_localizations.dart';
+import '../../../common/widgets/common_app_bar_actions.dart';
 import 'quiz_provider.dart';
 
 class QuizPage extends ConsumerStatefulWidget {
@@ -34,6 +35,7 @@ class _QuizPageState extends ConsumerState<QuizPage> {
         title: Text(quiz.queue.isEmpty
             ? l10n.quizStart
             : '${quiz.currentIndex + 1} / ${quiz.queue.length}'),
+        actions: const [CommonAppBarActions()],
       ),
       body: switch (quiz.phase) {
         QuizPhase.loading =>

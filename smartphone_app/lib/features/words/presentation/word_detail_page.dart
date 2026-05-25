@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:language_learn_app/l10n/app_localizations.dart';
+import '../../../common/widgets/common_app_bar_actions.dart';
+import '../../../core/tts/tts_service.dart';
 import '../data/word_repository.dart';
 
 final _wordDetailProvider = FutureProvider.family((ref, int id) {
@@ -30,6 +32,7 @@ class WordDetailPage extends ConsumerWidget {
             icon: const Icon(Icons.delete),
             onPressed: () => _confirmDelete(context, ref, l10n),
           ),
+          const CommonAppBarActions(),
         ],
       ),
       body: wordAsync.when(
@@ -42,9 +45,21 @@ class WordDetailPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(word.word,
-                    style: Theme.of(context).textTheme.headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Text(word.word,
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(fontWeight: FontWeight.bold)),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.volume_up),
+                      onPressed: () =>
+                          ref.read(ttsServiceProvider).speak(word.word),
+                    ),
+                  ],
+                ),
                 if (word.reading != null)
                   Text(word.reading!,
                       style: Theme.of(context).textTheme.bodySmall),
@@ -64,9 +79,24 @@ class WordDetailPage extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(s.sentenceEn,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w500)),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(s.sentenceEn,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w500)),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.volume_up, size: 20),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => ref
+                                        .read(ttsServiceProvider)
+                                        .speak(s.sentenceEn),
+                                  ),
+                                ],
+                              ),
                               Text(s.sentenceJa,
                                   style: const TextStyle(color: Colors.grey)),
                             ],

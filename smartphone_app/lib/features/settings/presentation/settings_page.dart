@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
+import 'package:language_learn_app/l10n/app_localizations.dart';
+import '../../../common/widgets/common_app_bar_actions.dart';
 import '../domain/app_settings.dart';
 import 'settings_provider.dart';
 
@@ -17,6 +19,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   final _quizCountCtrl = TextEditingController();
   final _dbLimitCtrl = TextEditingController();
   AiProvider _provider = AiProvider.gemini;
+  TtsAccent _ttsAccent = TtsAccent.american;
   bool _obscureGoogle = true;
   bool _obscureClaude = true;
   bool _initialized = false;
@@ -42,6 +45,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       data: (settings) {
         if (!_initialized) {
           _provider = settings.aiProvider;
+          _ttsAccent = settings.ttsAccent;
           _googleKeyCtrl.text = settings.googleApiKey ?? '';
           _claudeKeyCtrl.text = settings.claudeApiKey ?? '';
           _quizCountCtrl.text = settings.quizCount.toString();
@@ -49,7 +53,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           _initialized = true;
         }
         return Scaffold(
-          appBar: AppBar(title: Text(l10n.settings)),
+          appBar: AppBar(
+            title: Text(l10n.settings),
+            actions: const [
+              CommonAppBarActions(showSettingsButton: false),
+            ],
+          ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -115,10 +124,38 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   controller: _dbLimitCtrl,
                   keyboardType: TextInputType.number,
                 ),
+                const SizedBox(height: 16),
+                Text('読み上げアクセント',
+                    style: Theme.of(context).textTheme.titleMedium),
+                RadioListTile<TtsAccent>(
+                  title: const Text('アメリカ英語 (US)'),
+                  value: TtsAccent.american,
+                  groupValue: _ttsAccent,
+                  onChanged: (v) => setState(() => _ttsAccent = v!),
+                ),
+                RadioListTile<TtsAccent>(
+                  title: const Text('イギリス英語 (UK)'),
+                  value: TtsAccent.british,
+                  groupValue: _ttsAccent,
+                  onChanged: (v) => setState(() => _ttsAccent = v!),
+                ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _save,
                   child: Text(l10n.save),
+                ),
+                const SizedBox(height: 32),
+                const Divider(),
+                const SizedBox(height: 8),
+                Text(l10n.exportImport,
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.import_export),
+                  title: Text(l10n.exportImport),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/export'),
                 ),
               ],
             ),
@@ -135,8 +172,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       claudeApiKey: _claudeKeyCtrl.text.isEmpty ? null : _claudeKeyCtrl.text,
       quizCount: int.tryParse(_quizCountCtrl.text) ?? 20,
       dbLimitMb: int.tryParse(_dbLimitCtrl.text) ?? 100,
+      ttsAccent: _ttsAccent,
     );
-    await ref.read(settingsProvider.notifier).update(settings);
+    await ref.read(settingsProvider.notifier).save(settings);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.save)),

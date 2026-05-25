@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:language_learn_app/l10n/app_localizations.dart';
 import '../data/word_repository.dart';
 import '../domain/example_sentence.dart';
 import '../domain/word_source.dart';
@@ -11,9 +11,10 @@ import '../../../core/exceptions/app_exception.dart';
 import '../../../core/utils/storage_monitor.dart';
 
 class WordEditPage extends ConsumerStatefulWidget {
-  const WordEditPage({super.key, this.wordId});
+  const WordEditPage({super.key, this.wordId, this.initialWord});
 
   final int? wordId;
+  final String? initialWord;
 
   @override
   ConsumerState<WordEditPage> createState() => _WordEditPageState();
@@ -35,7 +36,11 @@ class _WordEditPageState extends ConsumerState<WordEditPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.wordId != null) _loadExisting();
+    if (widget.wordId != null) {
+      _loadExisting();
+    } else if (widget.initialWord != null) {
+      _wordCtrl.text = widget.initialWord!;
+    }
   }
 
   Future<void> _loadExisting() async {

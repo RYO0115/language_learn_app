@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../settings/presentation/settings_provider.dart';
+import '../../streak/data/streak_repository.dart';
 import '../../words/domain/word.dart';
 import '../data/quiz_repository.dart';
 
@@ -94,6 +96,8 @@ class QuizNotifier extends StateNotifier<QuizState> {
       );
     } else {
       await repo.completeSession(sessionId);
+      final today = DateTime.now().toDateString();
+      await _ref.read(streakRepositoryProvider).recordQuizComplete(today);
       state = state.copyWith(
         phase: QuizPhase.completed,
         correctCount: newCorrect,

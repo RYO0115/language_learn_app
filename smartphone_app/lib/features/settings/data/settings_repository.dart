@@ -13,6 +13,7 @@ class SettingsRepository {
   static const _keyClaudeApiKey = 'claude_api_key';
   static const _keyQuizCount = 'quiz_count';
   static const _keyDbLimitMb = 'db_limit_mb';
+  static const _keyTtsAccent = 'tts_accent';
 
   Future<AppSettings> load() async {
     final provider = await _storage.read(key: _keyProvider);
@@ -20,6 +21,7 @@ class SettingsRepository {
     final claudeKey = await _storage.read(key: _keyClaudeApiKey);
     final quizCount = await _storage.read(key: _keyQuizCount);
     final dbLimit = await _storage.read(key: _keyDbLimitMb);
+    final ttsAccent = await _storage.read(key: _keyTtsAccent);
 
     return AppSettings(
       aiProvider: provider == AiProvider.claude.name
@@ -29,23 +31,32 @@ class SettingsRepository {
       claudeApiKey: claudeKey,
       quizCount: int.tryParse(quizCount ?? '') ?? 20,
       dbLimitMb: int.tryParse(dbLimit ?? '') ?? 100,
+      ttsAccent: ttsAccent == TtsAccent.british.name
+          ? TtsAccent.british
+          : TtsAccent.american,
     );
   }
 
   Future<void> save(AppSettings settings) async {
     await _storage.write(
         key: _keyProvider, value: settings.aiProvider.name);
-    if (settings.googleApiKey != null) {
+    if (settings.googleApiKey != null && settings.googleApiKey!.isNotEmpty) {
       await _storage.write(
           key: _keyGoogleApiKey, value: settings.googleApiKey);
+    } else {
+      await _storage.delete(key: _keyGoogleApiKey);
     }
-    if (settings.claudeApiKey != null) {
+    if (settings.claudeApiKey != null && settings.claudeApiKey!.isNotEmpty) {
       await _storage.write(
           key: _keyClaudeApiKey, value: settings.claudeApiKey);
+    } else {
+      await _storage.delete(key: _keyClaudeApiKey);
     }
     await _storage.write(
         key: _keyQuizCount, value: settings.quizCount.toString());
     await _storage.write(
         key: _keyDbLimitMb, value: settings.dbLimitMb.toString());
+    await _storage.write(
+        key: _keyTtsAccent, value: settings.ttsAccent.name);
   }
 }

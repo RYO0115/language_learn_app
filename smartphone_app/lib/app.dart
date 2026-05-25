@@ -13,7 +13,7 @@ import 'features/export/presentation/export_page.dart';
 import 'features/settings/presentation/settings_page.dart';
 import 'features/onboarding/presentation/api_key_setup_page.dart';
 import 'features/settings/presentation/settings_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:language_learn_app/l10n/app_localizations.dart';
 
 final _routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -34,11 +34,15 @@ final _routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/', builder: (_, __) => const DashboardPage()),
       GoRoute(path: '/words', builder: (_, __) => const WordListPage()),
       GoRoute(
+        path: '/words/add',
+        builder: (_, state) =>
+            WordEditPage(initialWord: state.extra as String?),
+      ),
+      GoRoute(
         path: '/words/:id',
         builder: (_, state) =>
             WordDetailPage(wordId: int.parse(state.pathParameters['id']!)),
       ),
-      GoRoute(path: '/words/add', builder: (_, __) => const WordEditPage()),
       GoRoute(
         path: '/words/:id/edit',
         builder: (_, state) =>

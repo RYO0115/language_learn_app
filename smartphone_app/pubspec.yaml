@@ -35,10 +35,16 @@ dependencies:
   # ファイル選択
   file_picker: ^8.0.0
 
+  # URL をブラウザで開く
+  url_launcher: ^6.3.0
+
+  # 音声読み上げ
+  flutter_tts: ^4.0.0
+
   # 多言語
   flutter_localizations:
     sdk: flutter
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # 将来（広告）
   # google_mobile_ads: ^5.0.0

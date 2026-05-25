@@ -46,8 +46,8 @@ dependencies:
     sdk: flutter
   intl: any
 
-  # 将来（広告）
-  # google_mobile_ads: ^5.0.0
+  # 広告
+  google_mobile_ads: ^5.0.0
 
   # 将来（バックアップ）
   # icloud_storage: ^3.0.0

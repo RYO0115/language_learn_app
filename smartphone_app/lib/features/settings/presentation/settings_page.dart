@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:language_learn_app/l10n/app_localizations.dart';
+import '../../../common/widgets/ad_scaffold.dart';
 import '../../../common/widgets/common_app_bar_actions.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -10,7 +11,7 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
+    return AdScaffold(
       appBar: AppBar(
         title: Text(l10n.settings),
         actions: const [CommonAppBarActions(showSettingsButton: false)],

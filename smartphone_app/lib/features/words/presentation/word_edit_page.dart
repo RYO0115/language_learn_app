@@ -8,6 +8,7 @@ import '../domain/word_source.dart';
 import '../../ai/data/ai_service.dart';
 import '../../settings/presentation/settings_provider.dart';
 import '../../../core/exceptions/app_exception.dart';
+import '../../../common/widgets/ad_scaffold.dart';
 import '../../../core/utils/storage_monitor.dart';
 
 class WordEditPage extends ConsumerStatefulWidget {
@@ -73,7 +74,7 @@ class _WordEditPageState extends ConsumerState<WordEditPage> {
     final l10n = AppLocalizations.of(context)!;
     final isEdit = widget.wordId != null;
 
-    return Scaffold(
+    return AdScaffold(
       appBar: AppBar(
           title: Text(isEdit ? l10n.editWord : l10n.addWord)),
       body: _isLoading

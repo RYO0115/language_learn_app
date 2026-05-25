@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:language_learn_app/l10n/app_localizations.dart';
+import '../../../common/widgets/ad_scaffold.dart';
 import '../../../common/widgets/common_app_bar_actions.dart';
 import '../data/export_service.dart';
 
@@ -14,7 +15,7 @@ class ExportPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final service = ref.watch(exportServiceProvider);
 
-    return Scaffold(
+    return AdScaffold(
       appBar: AppBar(
         title: Text(l10n.exportImport),
         actions: const [CommonAppBarActions()],

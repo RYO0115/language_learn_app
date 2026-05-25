@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:language_learn_app/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../common/widgets/ad_scaffold.dart';
 import '../../settings/domain/app_settings.dart';
 import '../../settings/presentation/settings_provider.dart';
 
@@ -29,7 +30,7 @@ class _ApiKeySetupPageState extends ConsumerState<ApiKeySetupPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
+    return AdScaffold(
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

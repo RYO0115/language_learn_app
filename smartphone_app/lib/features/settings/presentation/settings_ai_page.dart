@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:language_learn_app/l10n/app_localizations.dart';
+import '../../../common/widgets/ad_scaffold.dart';
 import '../../../common/widgets/common_app_bar_actions.dart';
 import '../domain/app_settings.dart';
 import 'settings_provider.dart';
@@ -43,7 +44,7 @@ class _SettingsAiPageState extends ConsumerState<SettingsAiPage> {
           _claudeKeyCtrl.text = settings.claudeApiKey ?? '';
           _initialized = true;
         }
-        return Scaffold(
+        return AdScaffold(
           appBar: AppBar(
             title: const Text('AI 設定'),
             actions: const [CommonAppBarActions(showSettingsButton: false)],

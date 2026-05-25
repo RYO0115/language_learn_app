@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:language_learn_app/l10n/app_localizations.dart';
 import '../../../common/widgets/ad_scaffold.dart';
 import '../../../common/widgets/common_app_bar_actions.dart';
+import '../domain/app_settings.dart';
+import 'settings_provider.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -11,6 +13,9 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final settings = ref.watch(settingsProvider).valueOrNull;
+    final adsEnabled = settings?.adsEnabled ?? true;
+
     return AdScaffold(
       appBar: AppBar(
         title: Text(l10n.settings),
@@ -37,6 +42,29 @@ class SettingsPage extends ConsumerWidget {
             title: '単語帳設定',
             subtitle: '容量制限・エクスポート',
             onTap: () => context.push('/settings/words'),
+          ),
+          const Divider(height: 1),
+          SwitchListTile(
+            secondary: const Icon(Icons.ad_units_outlined),
+            title: const Text('広告を表示する'),
+            subtitle: const Text('広告収益でアプリの開発を支援できます'),
+            value: adsEnabled,
+            onChanged: settings == null
+                ? null
+                : (v) async {
+                    final updated = AppSettings(
+                      aiProvider: settings.aiProvider,
+                      googleApiKey: settings.googleApiKey,
+                      claudeApiKey: settings.claudeApiKey,
+                      quizCount: settings.quizCount,
+                      dbLimitMb: settings.dbLimitMb,
+                      ttsAccent: settings.ttsAccent,
+                      adsEnabled: v,
+                    );
+                    await ref
+                        .read(settingsProvider.notifier)
+                        .save(updated);
+                  },
           ),
         ],
       ),

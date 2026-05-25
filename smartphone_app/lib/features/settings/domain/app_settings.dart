@@ -10,6 +10,7 @@ class AppSettings {
     this.quizCount = 20,
     this.dbLimitMb = 100,
     this.ttsAccent = TtsAccent.american,
+    this.adsEnabled = true,
   });
 
   final AiProvider aiProvider;
@@ -18,6 +19,7 @@ class AppSettings {
   final int quizCount;
   final int dbLimitMb;
   final TtsAccent ttsAccent;
+  final bool adsEnabled;
 
   bool get hasAnyApiKey =>
       (googleApiKey != null && googleApiKey!.isNotEmpty) ||
@@ -30,6 +32,7 @@ class AppSettings {
     int? quizCount,
     int? dbLimitMb,
     TtsAccent? ttsAccent,
+    bool? adsEnabled,
   }) {
     return AppSettings(
       aiProvider: aiProvider ?? this.aiProvider,
@@ -38,6 +41,7 @@ class AppSettings {
       quizCount: quizCount ?? this.quizCount,
       dbLimitMb: dbLimitMb ?? this.dbLimitMb,
       ttsAccent: ttsAccent ?? this.ttsAccent,
+      adsEnabled: adsEnabled ?? this.adsEnabled,
     );
   }
 }

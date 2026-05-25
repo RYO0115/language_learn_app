@@ -66,17 +66,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               children: [
                 Text(l10n.settingsAiProvider,
                     style: Theme.of(context).textTheme.titleMedium),
-                RadioListTile<AiProvider>(
-                  title: Text(l10n.providerGemini),
-                  value: AiProvider.gemini,
+                RadioGroup<AiProvider>(
                   groupValue: _provider,
                   onChanged: (v) => setState(() => _provider = v!),
-                ),
-                RadioListTile<AiProvider>(
-                  title: Text(l10n.providerClaude),
-                  value: AiProvider.claude,
-                  groupValue: _provider,
-                  onChanged: (v) => setState(() => _provider = v!),
+                  child: Column(
+                    children: [
+                      RadioListTile<AiProvider>(
+                        title: Text(l10n.providerGemini),
+                        value: AiProvider.gemini,
+                      ),
+                      RadioListTile<AiProvider>(
+                        title: Text(l10n.providerClaude),
+                        value: AiProvider.claude,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text('Google Gemini API キー',
@@ -127,17 +131,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 const SizedBox(height: 16),
                 Text('読み上げアクセント',
                     style: Theme.of(context).textTheme.titleMedium),
-                RadioListTile<TtsAccent>(
-                  title: const Text('アメリカ英語 (US)'),
-                  value: TtsAccent.american,
+                RadioGroup<TtsAccent>(
                   groupValue: _ttsAccent,
                   onChanged: (v) => setState(() => _ttsAccent = v!),
-                ),
-                RadioListTile<TtsAccent>(
-                  title: const Text('イギリス英語 (UK)'),
-                  value: TtsAccent.british,
-                  groupValue: _ttsAccent,
-                  onChanged: (v) => setState(() => _ttsAccent = v!),
+                  child: const Column(
+                    children: [
+                      RadioListTile<TtsAccent>(
+                        title: Text('アメリカ英語 (US)'),
+                        value: TtsAccent.american,
+                      ),
+                      RadioListTile<TtsAccent>(
+                        title: Text('イギリス英語 (UK)'),
+                        value: TtsAccent.british,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(

@@ -378,7 +378,7 @@ class _SourceCardState extends State<_SourceCard> {
               ],
             ),
             DropdownButtonFormField<SourceType>(
-              value: widget.fields.type,
+              initialValue: widget.fields.type,
               items: SourceType.values
                   .map((t) =>
                       DropdownMenuItem(value: t, child: Text(t.name)))

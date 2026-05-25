@@ -142,7 +142,7 @@ class WordDetailPage extends ConsumerWidget {
     );
     if (confirmed == true && context.mounted) {
       await ref.read(wordRepositoryProvider).deleteWord(wordId);
-      context.pop();
+      if (context.mounted) context.pop();
     }
   }
 }

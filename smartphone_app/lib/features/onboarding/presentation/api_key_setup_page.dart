@@ -44,17 +44,21 @@ class _ApiKeySetupPageState extends ConsumerState<ApiKeySetupPage> {
                   style: Theme.of(context).textTheme.bodyMedium,
                   textAlign: TextAlign.center),
               const SizedBox(height: 32),
-              RadioListTile<AiProvider>(
-                title: Text(l10n.providerGemini),
-                value: AiProvider.gemini,
+              RadioGroup<AiProvider>(
                 groupValue: _provider,
                 onChanged: (v) => setState(() => _provider = v!),
-              ),
-              RadioListTile<AiProvider>(
-                title: Text(l10n.providerClaude),
-                value: AiProvider.claude,
-                groupValue: _provider,
-                onChanged: (v) => setState(() => _provider = v!),
+                child: Column(
+                  children: [
+                    RadioListTile<AiProvider>(
+                      title: Text(l10n.providerGemini),
+                      value: AiProvider.gemini,
+                    ),
+                    RadioListTile<AiProvider>(
+                      title: Text(l10n.providerClaude),
+                      value: AiProvider.claude,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               Text(l10n.settingsApiKey,

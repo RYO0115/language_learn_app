@@ -12,7 +12,7 @@ class DuplicateWordException extends AppException {
 }
 
 class AiGenerationException extends AppException {
-  const AiGenerationException(String detail) : super(detail);
+  const AiGenerationException(super.message);
 }
 
 class StorageOverLimitException extends AppException {
@@ -26,5 +26,5 @@ class ApiKeyNotFoundException extends AppException {
 }
 
 class ImportException extends AppException {
-  const ImportException(String detail) : super(detail);
+  const ImportException(super.message);
 }

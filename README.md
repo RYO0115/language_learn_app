@@ -1,11 +1,20 @@
 # Language Learn App — 単語帳アプリ
 
-日本語話者向けの英語学習単語帳 Web アプリです。  
+日本語話者向けの英語学習単語帳アプリです。  
 AI（Claude または Gemini）が意味・発音・例文を自動生成し、スマートな単語テストで効率よく覚えられます。
+
+## リポジトリ構成
+
+| ディレクトリ | 内容 |
+|---|---|
+| [`server_app/`](server_app/) | Python (FastAPI + HTMX) Web アプリ |
+| [`smartphone_app/`](smartphone_app/) | Flutter スマートフォンアプリ |
+
+スマートフォンアプリの実行方法は **[smartphone_app/README.md](smartphone_app/README.md)** を参照してください。
 
 ---
 
-## 目次
+## 目次（Web アプリ）
 
 1. [セットアップ](#セットアップ)
    - [Gemini API キーの取得](#google-gemini-api-キーの取得手順無料クレジットカード不要)

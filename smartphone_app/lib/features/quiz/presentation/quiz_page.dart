@@ -5,6 +5,7 @@ import 'package:language_learn_app/l10n/app_localizations.dart';
 import '../../../common/widgets/ad_scaffold.dart';
 import '../../../common/widgets/common_app_bar_actions.dart';
 import '../../../core/ads/interstitial_ad_service.dart';
+import '../../settings/presentation/settings_provider.dart';
 import 'quiz_provider.dart';
 
 class QuizPage extends ConsumerStatefulWidget {
@@ -21,8 +22,12 @@ class _QuizPageState extends ConsumerState<QuizPage> {
   @override
   void initState() {
     super.initState();
-    _interstitialAd.load();
-    Future.microtask(() => ref.read(quizProvider.notifier).startQuiz());
+    Future.microtask(() {
+      final adsEnabled =
+          ref.read(settingsProvider).valueOrNull?.adsEnabled ?? true;
+      if (adsEnabled) _interstitialAd.load();
+      ref.read(quizProvider.notifier).startQuiz();
+    });
   }
 
   @override
@@ -39,13 +44,21 @@ class _QuizPageState extends ConsumerState<QuizPage> {
     if (quiz.phase == QuizPhase.completed && !_hasNavigated) {
       _hasNavigated = true;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await _interstitialAd.showIfReady(
-          onDismissed: () {
-            if (mounted) {
-              context.pushReplacement('/quiz/result/${quiz.sessionId}');
-            }
-          },
-        );
+        final adsEnabled =
+            ref.read(settingsProvider).valueOrNull?.adsEnabled ?? true;
+        if (adsEnabled) {
+          await _interstitialAd.showIfReady(
+            onDismissed: () {
+              if (mounted) {
+                context.pushReplacement('/quiz/result/${quiz.sessionId}');
+              }
+            },
+          );
+        } else {
+          if (mounted) {
+            context.pushReplacement('/quiz/result/${quiz.sessionId}');
+          }
+        }
       });
     }
 

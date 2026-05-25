@@ -11,6 +11,9 @@ import 'features/quiz/presentation/quiz_result_page.dart';
 import 'features/streak/presentation/streak_calendar_page.dart';
 import 'features/export/presentation/export_page.dart';
 import 'features/settings/presentation/settings_page.dart';
+import 'features/settings/presentation/settings_ai_page.dart';
+import 'features/settings/presentation/settings_quiz_page.dart';
+import 'features/settings/presentation/settings_words_page.dart';
 import 'features/onboarding/presentation/api_key_setup_page.dart';
 import 'features/settings/presentation/settings_provider.dart';
 import 'package:language_learn_app/l10n/app_localizations.dart';
@@ -57,6 +60,9 @@ final _routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/streak', builder: (_, __) => const StreakCalendarPage()),
       GoRoute(path: '/export', builder: (_, __) => const ExportPage()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
+      GoRoute(path: '/settings/ai', builder: (_, __) => const SettingsAiPage()),
+      GoRoute(path: '/settings/quiz', builder: (_, __) => const SettingsQuizPage()),
+      GoRoute(path: '/settings/words', builder: (_, __) => const SettingsWordsPage()),
     ],
   );
 });

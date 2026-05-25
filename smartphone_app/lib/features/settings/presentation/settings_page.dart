@@ -3,190 +3,68 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:language_learn_app/l10n/app_localizations.dart';
 import '../../../common/widgets/common_app_bar_actions.dart';
-import '../domain/app_settings.dart';
-import 'settings_provider.dart';
 
-class SettingsPage extends ConsumerStatefulWidget {
+class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
-  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.settings),
+        actions: const [CommonAppBarActions(showSettingsButton: false)],
+      ),
+      body: ListView(
+        children: [
+          _SettingsTile(
+            icon: Icons.smart_toy_outlined,
+            title: 'AI 設定',
+            subtitle: 'AIプロバイダー・APIキー',
+            onTap: () => context.push('/settings/ai'),
+          ),
+          const Divider(height: 1),
+          _SettingsTile(
+            icon: Icons.quiz_outlined,
+            title: 'クイズ設定',
+            subtitle: '出題数などの設定',
+            onTap: () => context.push('/settings/quiz'),
+          ),
+          const Divider(height: 1),
+          _SettingsTile(
+            icon: Icons.menu_book_outlined,
+            title: '単語帳設定',
+            subtitle: '容量制限・エクスポート',
+            onTap: () => context.push('/settings/words'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _SettingsPageState extends ConsumerState<SettingsPage> {
-  final _googleKeyCtrl = TextEditingController();
-  final _claudeKeyCtrl = TextEditingController();
-  final _quizCountCtrl = TextEditingController();
-  final _dbLimitCtrl = TextEditingController();
-  AiProvider _provider = AiProvider.gemini;
-  TtsAccent _ttsAccent = TtsAccent.american;
-  bool _obscureGoogle = true;
-  bool _obscureClaude = true;
-  bool _initialized = false;
+class _SettingsTile extends StatelessWidget {
+  const _SettingsTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
-  @override
-  void dispose() {
-    _googleKeyCtrl.dispose();
-    _claudeKeyCtrl.dispose();
-    _quizCountCtrl.dispose();
-    _dbLimitCtrl.dispose();
-    super.dispose();
-  }
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final settingsAsync = ref.watch(settingsProvider);
-
-    return settingsAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text(e.toString()))),
-      data: (settings) {
-        if (!_initialized) {
-          _provider = settings.aiProvider;
-          _ttsAccent = settings.ttsAccent;
-          _googleKeyCtrl.text = settings.googleApiKey ?? '';
-          _claudeKeyCtrl.text = settings.claudeApiKey ?? '';
-          _quizCountCtrl.text = settings.quizCount.toString();
-          _dbLimitCtrl.text = settings.dbLimitMb.toString();
-          _initialized = true;
-        }
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(l10n.settings),
-            actions: const [
-              CommonAppBarActions(showSettingsButton: false),
-            ],
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(l10n.settingsAiProvider,
-                    style: Theme.of(context).textTheme.titleMedium),
-                RadioGroup<AiProvider>(
-                  groupValue: _provider,
-                  onChanged: (v) => setState(() => _provider = v!),
-                  child: Column(
-                    children: [
-                      RadioListTile<AiProvider>(
-                        title: Text(l10n.providerGemini),
-                        value: AiProvider.gemini,
-                      ),
-                      RadioListTile<AiProvider>(
-                        title: Text(l10n.providerClaude),
-                        value: AiProvider.claude,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text('Google Gemini API キー',
-                    style: Theme.of(context).textTheme.titleMedium),
-                TextField(
-                  controller: _googleKeyCtrl,
-                  obscureText: _obscureGoogle,
-                  decoration: InputDecoration(
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscureGoogle
-                          ? Icons.visibility
-                          : Icons.visibility_off),
-                      onPressed: () =>
-                          setState(() => _obscureGoogle = !_obscureGoogle),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text('Anthropic Claude API キー',
-                    style: Theme.of(context).textTheme.titleMedium),
-                TextField(
-                  controller: _claudeKeyCtrl,
-                  obscureText: _obscureClaude,
-                  decoration: InputDecoration(
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscureClaude
-                          ? Icons.visibility
-                          : Icons.visibility_off),
-                      onPressed: () =>
-                          setState(() => _obscureClaude = !_obscureClaude),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(l10n.settingsQuizCount,
-                    style: Theme.of(context).textTheme.titleMedium),
-                TextField(
-                  controller: _quizCountCtrl,
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 16),
-                Text(l10n.settingsDbLimit,
-                    style: Theme.of(context).textTheme.titleMedium),
-                TextField(
-                  controller: _dbLimitCtrl,
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 16),
-                Text('読み上げアクセント',
-                    style: Theme.of(context).textTheme.titleMedium),
-                RadioGroup<TtsAccent>(
-                  groupValue: _ttsAccent,
-                  onChanged: (v) => setState(() => _ttsAccent = v!),
-                  child: const Column(
-                    children: [
-                      RadioListTile<TtsAccent>(
-                        title: Text('アメリカ英語 (US)'),
-                        value: TtsAccent.american,
-                      ),
-                      RadioListTile<TtsAccent>(
-                        title: Text('イギリス英語 (UK)'),
-                        value: TtsAccent.british,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _save,
-                  child: Text(l10n.save),
-                ),
-                const SizedBox(height: 32),
-                const Divider(),
-                const SizedBox(height: 8),
-                Text(l10n.exportImport,
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.import_export),
-                  title: Text(l10n.exportImport),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/export'),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.chevron_right),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      onTap: onTap,
     );
-  }
-
-  Future<void> _save() async {
-    final settings = AppSettings(
-      aiProvider: _provider,
-      googleApiKey: _googleKeyCtrl.text.isEmpty ? null : _googleKeyCtrl.text,
-      claudeApiKey: _claudeKeyCtrl.text.isEmpty ? null : _claudeKeyCtrl.text,
-      quizCount: int.tryParse(_quizCountCtrl.text) ?? 20,
-      dbLimitMb: int.tryParse(_dbLimitCtrl.text) ?? 100,
-      ttsAccent: _ttsAccent,
-    );
-    await ref.read(settingsProvider.notifier).save(settings);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.save)),
-      );
-    }
   }
 }

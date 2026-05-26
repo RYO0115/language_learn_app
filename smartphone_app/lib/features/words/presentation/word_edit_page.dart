@@ -59,6 +59,13 @@ class _WordEditPageState extends ConsumerState<WordEditPage> {
       for (final s in word.exampleSentences) {
         _sentences.add(_SentenceFields(en: s.sentenceEn, ja: s.sentenceJa));
       }
+      for (final src in word.sources) {
+        _sources.add(_SourceFields(
+          type: src.sourceType,
+          title: src.title ?? '',
+          url: src.url ?? '',
+        ));
+      }
     });
   }
 
@@ -335,14 +342,18 @@ class _SentenceFields {
 }
 
 class _SourceFields {
-  _SourceFields() {
-    titleCtrl = TextEditingController();
-    urlCtrl = TextEditingController();
+  _SourceFields({
+    this.type = SourceType.other,
+    String title = '',
+    String url = '',
+  }) {
+    titleCtrl = TextEditingController(text: title);
+    urlCtrl = TextEditingController(text: url);
   }
 
   late final TextEditingController titleCtrl;
   late final TextEditingController urlCtrl;
-  SourceType type = SourceType.other;
+  SourceType type;
 }
 
 class _SentenceCard extends StatelessWidget {

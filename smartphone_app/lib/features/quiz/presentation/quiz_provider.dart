@@ -2,8 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../settings/presentation/settings_provider.dart';
 import '../../streak/data/streak_repository.dart';
+import '../../words/data/word_repository.dart';
+import '../../words/domain/source_filter.dart';
 import '../../words/domain/word.dart';
 import '../data/quiz_repository.dart';
+
+// クイズ開始前に出典フィルタをセットしてから /quiz に遷移する
+final quizSourceFilterProvider =
+    StateProvider<SourceFilter?>((ref) => null);
 
 enum QuizPhase { loading, question, revealing, completed }
 
@@ -61,7 +67,25 @@ class QuizNotifier extends StateNotifier<QuizState> {
     state = const QuizState(phase: QuizPhase.loading);
     final repo = _ref.read(quizRepositoryProvider);
     final settings = await _ref.read(settingsProvider.future);
-    final queue = await repo.buildQuizQueue(settings.quizCount);
+
+    // 出典フィルタが設定されていれば対象 ID を絞り込む
+    final sourceFilter = _ref.read(quizSourceFilterProvider);
+    _ref.read(quizSourceFilterProvider.notifier).state = null;
+
+    Set<int>? allowedWordIds;
+    if (sourceFilter != null && !sourceFilter.isEmpty) {
+      final allWords =
+          await _ref.read(wordRepositoryProvider).getAllWords();
+      allowedWordIds = allWords
+          .where(sourceFilter.matchesWord)
+          .map((w) => w.id)
+          .toSet();
+    }
+
+    final queue = await repo.buildQuizQueue(
+      settings.quizCount,
+      allowedWordIds: allowedWordIds,
+    );
     final sessionId = await repo.startSession();
     state = QuizState(
       phase: QuizPhase.question,

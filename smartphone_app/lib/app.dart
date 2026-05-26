@@ -6,6 +6,7 @@ import 'features/dashboard/presentation/dashboard_page.dart';
 import 'features/words/presentation/word_list_page.dart';
 import 'features/words/presentation/word_detail_page.dart';
 import 'features/words/presentation/word_edit_page.dart';
+import 'features/quiz/presentation/quiz_custom_page.dart';
 import 'features/quiz/presentation/quiz_page.dart';
 import 'features/quiz/presentation/quiz_result_page.dart';
 import 'features/streak/presentation/streak_calendar_page.dart';
@@ -52,6 +53,7 @@ final _routerProvider = Provider<GoRouter>((ref) {
             WordEditPage(wordId: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(path: '/quiz', builder: (_, __) => const QuizPage()),
+      GoRoute(path: '/quiz/custom', builder: (_, __) => const QuizCustomPage()),
       GoRoute(
         path: '/quiz/result/:sessionId',
         builder: (_, state) => QuizResultPage(

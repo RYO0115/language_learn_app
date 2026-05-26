@@ -28,7 +28,8 @@ class WordDao extends DatabaseAccessor<AppDatabase> with _$WordDaoMixin {
 
   Future<int> insertWord(WordsCompanion word) => into(words).insert(word);
 
-  Future<bool> updateWord(WordsCompanion word) => update(words).replace(word);
+  Future<int> updateWord(WordsCompanion word) =>
+      (update(words)..where((w) => w.id.equals(word.id.value))).write(word);
 
   Future<int> deleteWord(int id) =>
       (delete(words)..where((w) => w.id.equals(id))).go();

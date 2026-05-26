@@ -31,6 +31,7 @@ class StreakRepository {
   Future<void> recordQuizComplete(String date) async {
     final existing = await _dao.getRecordByDate(date);
     await _dao.upsertRecord(StudyRecordsCompanion(
+      id: existing != null ? Value(existing.id) : const Value.absent(),
       studyDate: Value(date),
       quizCompleted: Value((existing?.quizCompleted ?? 0) + 1),
       wordsStudied: Value(existing?.wordsStudied ?? 0),
@@ -40,6 +41,7 @@ class StreakRepository {
   Future<void> recordWordAdded(String date) async {
     final existing = await _dao.getRecordByDate(date);
     await _dao.upsertRecord(StudyRecordsCompanion(
+      id: existing != null ? Value(existing.id) : const Value.absent(),
       studyDate: Value(date),
       wordsStudied: Value((existing?.wordsStudied ?? 0) + 1),
       quizCompleted: Value(existing?.quizCompleted ?? 0),

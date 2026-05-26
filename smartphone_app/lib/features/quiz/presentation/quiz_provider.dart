@@ -54,7 +54,7 @@ class QuizState {
 }
 
 final quizProvider =
-    StateNotifierProvider<QuizNotifier, QuizState>((ref) {
+    StateNotifierProvider.autoDispose<QuizNotifier, QuizState>((ref) {
   return QuizNotifier(ref);
 });
 

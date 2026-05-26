@@ -11,6 +11,7 @@ class AppSettings {
     this.dbLimitMb = 100,
     this.ttsAccent = TtsAccent.american,
     this.adsEnabled = true,
+    this.isPremium = false,
   });
 
   final AiProvider aiProvider;
@@ -20,6 +21,7 @@ class AppSettings {
   final int dbLimitMb;
   final TtsAccent ttsAccent;
   final bool adsEnabled;
+  final bool isPremium;
 
   bool get hasAnyApiKey =>
       (googleApiKey != null && googleApiKey!.isNotEmpty) ||
@@ -33,6 +35,7 @@ class AppSettings {
     int? dbLimitMb,
     TtsAccent? ttsAccent,
     bool? adsEnabled,
+    bool? isPremium,
   }) {
     return AppSettings(
       aiProvider: aiProvider ?? this.aiProvider,
@@ -42,6 +45,7 @@ class AppSettings {
       dbLimitMb: dbLimitMb ?? this.dbLimitMb,
       ttsAccent: ttsAccent ?? this.ttsAccent,
       adsEnabled: adsEnabled ?? this.adsEnabled,
+      isPremium: isPremium ?? this.isPremium,
     );
   }
 }

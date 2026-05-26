@@ -15,6 +15,7 @@ class SettingsRepository {
   static const _keyDbLimitMb = 'db_limit_mb';
   static const _keyTtsAccent = 'tts_accent';
   static const _keyAdsEnabled = 'ads_enabled';
+  static const _keyIsPremium = 'is_premium';
 
   Future<AppSettings> load() async {
     final provider = await _storage.read(key: _keyProvider);
@@ -24,6 +25,7 @@ class SettingsRepository {
     final dbLimit = await _storage.read(key: _keyDbLimitMb);
     final ttsAccent = await _storage.read(key: _keyTtsAccent);
     final adsEnabled = await _storage.read(key: _keyAdsEnabled);
+    final isPremium = await _storage.read(key: _keyIsPremium);
 
     return AppSettings(
       aiProvider: provider == AiProvider.claude.name
@@ -37,6 +39,7 @@ class SettingsRepository {
           ? TtsAccent.british
           : TtsAccent.american,
       adsEnabled: adsEnabled != 'false',
+      isPremium: isPremium == 'true',
     );
   }
 
@@ -63,5 +66,7 @@ class SettingsRepository {
         key: _keyTtsAccent, value: settings.ttsAccent.name);
     await _storage.write(
         key: _keyAdsEnabled, value: settings.adsEnabled.toString());
+    await _storage.write(
+        key: _keyIsPremium, value: settings.isPremium.toString());
   }
 }

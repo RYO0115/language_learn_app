@@ -8,6 +8,7 @@ import '../domain/word_source.dart';
 import '../../ai/data/ai_service.dart';
 import '../../settings/presentation/settings_provider.dart';
 import '../../../core/exceptions/app_exception.dart';
+import '../../../core/purchase/purchase_provider.dart';
 import '../../../common/widgets/ad_scaffold.dart';
 import '../../../core/utils/storage_monitor.dart';
 
@@ -205,6 +206,35 @@ class _WordEditPageState extends ConsumerState<WordEditPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Check word count limit for new words only
+    if (widget.wordId == null) {
+      final isPremium =
+          ref.read(settingsProvider).valueOrNull?.isPremium ?? false;
+      if (!isPremium) {
+        final count =
+            await ref.read(wordRepositoryProvider).countWords();
+        if (count >= kFreeWordLimit) {
+          if (!mounted) return;
+          await showDialog<void>(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('登録上限に達しました'),
+              content: const Text(
+                '無料版では単語を1,000件まで登録できます。\nプレミアムにアップグレードすると上限が解除されます。',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('閉じる'),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+      }
+    }
 
     final monitor = StorageMonitor();
     if (await monitor.isOverLimit()) {

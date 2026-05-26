@@ -7,6 +7,12 @@ final wordListProvider = StreamProvider<List<Word>>((ref) {
   return repo.watchAllWords();
 });
 
+final wordCountProvider = FutureProvider<int>((ref) {
+  final repo = ref.watch(wordRepositoryProvider);
+  ref.watch(wordListProvider); // invalidate when list changes
+  return repo.countWords();
+});
+
 final wordSearchQueryProvider = StateProvider<String>((ref) => '');
 
 final filteredWordListProvider = Provider<AsyncValue<List<Word>>>((ref) {

@@ -273,25 +273,34 @@ class _SourceFilterBar extends StatelessWidget {
         ),
         if (filter.sourceType != null && availableTitles.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String?>(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
                 isDense: true,
-                value: filter.title,
-                hint: const Text('タイトルで絞り込む'),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('すべて')),
-                  ...availableTitles.map(
-                    (t) => DropdownMenuItem(value: t, child: Text(t)),
-                  ),
-                ],
-                onChanged: (title) {
-                  ref.read(sourceFilterProvider.notifier).state =
-                      SourceFilter(
-                    sourceType: filter.sourceType,
-                    title: title,
-                  );
-                },
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String?>(
+                  value: filter.title,
+                  isExpanded: true,
+                  isDense: true,
+                  hint: const Text('タイトルで絞り込む'),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('すべて')),
+                    ...availableTitles.map(
+                      (t) => DropdownMenuItem(value: t, child: Text(t)),
+                    ),
+                  ],
+                  onChanged: (title) {
+                    ref.read(sourceFilterProvider.notifier).state =
+                        SourceFilter(
+                      sourceType: filter.sourceType,
+                      title: title,
+                    );
+                  },
+                ),
               ),
             ),
           ),

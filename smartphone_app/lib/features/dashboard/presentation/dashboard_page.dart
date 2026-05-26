@@ -74,6 +74,19 @@ class DashboardPage extends ConsumerWidget {
                   onPressed: () => context.push('/quiz'),
                 ),
               ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  icon: const Icon(Icons.tune),
+                  label: const Text('カスタムクイズ',
+                      style: TextStyle(fontSize: 18)),
+                  onPressed: () => context.push('/quiz/custom'),
+                ),
+              ),
             ],
           ),
         ),

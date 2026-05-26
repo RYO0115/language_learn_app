@@ -17,7 +17,10 @@ class QuizRepository {
 
   final QuizDao _dao;
 
-  Future<List<Word>> buildQuizQueue(int count) async {
+  Future<List<Word>> buildQuizQueue(
+    int count, {
+    Set<int>? allowedWordIds,
+  }) async {
     final unanswered = await _dao.getUnansweredWords();
     final lowRate = await _dao.getWordsByCorrectRateAsc();
     final seen = <int>{};
@@ -25,6 +28,7 @@ class QuizRepository {
 
     for (final w in [...unanswered, ...lowRate]) {
       if (seen.contains(w.id)) continue;
+      if (allowedWordIds != null && !allowedWordIds.contains(w.id)) continue;
       seen.add(w.id);
       queue.add(Word(
         id: w.id,

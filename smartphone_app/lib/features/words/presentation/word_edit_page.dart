@@ -11,6 +11,7 @@ import '../../../core/exceptions/app_exception.dart';
 import '../../../core/purchase/purchase_provider.dart';
 import '../../../common/widgets/ad_scaffold.dart';
 import '../../../core/utils/storage_monitor.dart';
+import 'word_list_provider.dart';
 
 class WordEditPage extends ConsumerStatefulWidget {
   const WordEditPage({super.key, this.wordId, this.initialWord});
@@ -154,6 +155,8 @@ class _WordEditPageState extends ConsumerState<WordEditPage> {
                         style: Theme.of(context).textTheme.titleMedium),
                     ..._sources.asMap().entries.map((e) => _SourceCard(
                           fields: e.value,
+                          existingTitles:
+                              ref.watch(distinctSourceTitlesProvider(null)),
                           onRemove: () =>
                               setState(() => _sources.removeAt(e.key)),
                         )),
@@ -381,9 +384,14 @@ class _SentenceCard extends StatelessWidget {
 }
 
 class _SourceCard extends StatefulWidget {
-  const _SourceCard({required this.fields, required this.onRemove});
+  const _SourceCard({
+    required this.fields,
+    required this.existingTitles,
+    required this.onRemove,
+  });
 
   final _SourceFields fields;
+  final List<String> existingTitles;
   final VoidCallback onRemove;
 
   @override
@@ -391,6 +399,22 @@ class _SourceCard extends StatefulWidget {
 }
 
 class _SourceCardState extends State<_SourceCard> {
+  // Autocomplete が管理するコントローラーへの参照を保持し titleCtrl と同期する
+  TextEditingController? _autoCtrl;
+
+  void _syncTitle() {
+    final text = _autoCtrl?.text ?? '';
+    if (widget.fields.titleCtrl.text != text) {
+      widget.fields.titleCtrl.text = text;
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoCtrl?.removeListener(_syncTitle);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -417,9 +441,29 @@ class _SourceCardState extends State<_SourceCard> {
               onChanged: (v) =>
                   setState(() => widget.fields.type = v ?? SourceType.other),
             ),
-            TextField(
-              controller: widget.fields.titleCtrl,
-              decoration: const InputDecoration(labelText: 'タイトル'),
+            Autocomplete<String>(
+              initialValue:
+                  TextEditingValue(text: widget.fields.titleCtrl.text),
+              optionsBuilder: (textEditingValue) {
+                final input = textEditingValue.text.toLowerCase();
+                if (input.isEmpty) return widget.existingTitles;
+                return widget.existingTitles.where(
+                    (t) => t.toLowerCase().contains(input));
+              },
+              onSelected: (value) => widget.fields.titleCtrl.text = value,
+              fieldViewBuilder: (context, controller, focusNode, _) {
+                // コントローラー差し替え時にリスナーを付け替える
+                if (_autoCtrl != controller) {
+                  _autoCtrl?.removeListener(_syncTitle);
+                  _autoCtrl = controller;
+                  _autoCtrl!.addListener(_syncTitle);
+                }
+                return TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  decoration: const InputDecoration(labelText: 'タイトル'),
+                );
+              },
             ),
             TextField(
               controller: widget.fields.urlCtrl,

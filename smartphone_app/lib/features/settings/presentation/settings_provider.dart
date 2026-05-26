@@ -18,4 +18,10 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     await repo.save(settings);
     state = AsyncData(settings);
   }
+
+  Future<void> setPremium(bool value) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    await save(current.copyWith(isPremium: value));
+  }
 }

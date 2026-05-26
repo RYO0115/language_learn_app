@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:language_learn_app/l10n/app_localizations.dart';
 import '../../../common/widgets/ad_scaffold.dart';
 import '../../../common/widgets/common_app_bar_actions.dart';
-import '../domain/app_settings.dart';
+import '../../../core/purchase/purchase_provider.dart';
 import 'settings_provider.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -15,6 +15,8 @@ class SettingsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider).valueOrNull;
     final adsEnabled = settings?.adsEnabled ?? true;
+    final isPremium = settings?.isPremium ?? false;
+    final purchase = ref.watch(purchaseProvider);
 
     return AdScaffold(
       appBar: AppBar(
@@ -23,6 +25,50 @@ class SettingsPage extends ConsumerWidget {
       ),
       body: ListView(
         children: [
+          isPremium
+              ? const ListTile(
+                  leading: Icon(Icons.workspace_premium,
+                      color: Colors.amber),
+                  title: Text('プレミアム会員'),
+                  subtitle: Text('単語登録数の上限が解除されています'),
+                  trailing: Icon(Icons.check_circle, color: Colors.green),
+                )
+              : ListTile(
+                  leading: const Icon(Icons.workspace_premium_outlined),
+                  title: const Text('プレミアムにアップグレード'),
+                  subtitle: Text(purchase.productDetails != null
+                      ? '単語無制限登録 ${purchase.productDetails!.price}'
+                      : '単語無制限登録（買い切り）'),
+                  trailing: purchase.isPending
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.chevron_right),
+                  onTap: purchase.isPending || !purchase.isAvailable
+                      ? null
+                      : () => ref.read(purchaseProvider.notifier).buy(),
+                ),
+          if (!isPremium) ...[
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.restore),
+              title: const Text('購入を復元する'),
+              subtitle: const Text('以前の購入を復元します'),
+              trailing: purchase.isPending
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : null,
+              onTap: purchase.isPending
+                  ? null
+                  : () => ref.read(purchaseProvider.notifier).restore(),
+            ),
+          ],
+          const Divider(height: 1),
           _SettingsTile(
             icon: Icons.smart_toy_outlined,
             title: 'AI 設定',
@@ -52,15 +98,7 @@ class SettingsPage extends ConsumerWidget {
             onChanged: settings == null
                 ? null
                 : (v) async {
-                    final updated = AppSettings(
-                      aiProvider: settings.aiProvider,
-                      googleApiKey: settings.googleApiKey,
-                      claudeApiKey: settings.claudeApiKey,
-                      quizCount: settings.quizCount,
-                      dbLimitMb: settings.dbLimitMb,
-                      ttsAccent: settings.ttsAccent,
-                      adsEnabled: v,
-                    );
+                    final updated = settings.copyWith(adsEnabled: v);
                     await ref
                         .read(settingsProvider.notifier)
                         .save(updated);

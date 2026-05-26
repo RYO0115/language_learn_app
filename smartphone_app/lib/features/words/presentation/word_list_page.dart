@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:language_learn_app/l10n/app_localizations.dart';
 import '../../../common/widgets/ad_scaffold.dart';
 import '../../../common/widgets/common_app_bar_actions.dart';
+import '../../../core/purchase/purchase_provider.dart';
 import '../../../core/tts/tts_service.dart';
+import '../../settings/presentation/settings_provider.dart';
+import '../data/word_repository.dart';
 import 'word_list_provider.dart';
 
 class WordListPage extends ConsumerStatefulWidget {
@@ -26,30 +29,90 @@ class _WordListPageState extends ConsumerState<WordListPage> {
   }
 
 
+  Future<void> _onAddWord(BuildContext context, WidgetRef ref, String query) async {
+    final isPremium = ref.read(settingsProvider).valueOrNull?.isPremium ?? false;
+    if (!isPremium) {
+      final count = await ref.read(wordRepositoryProvider).countWords();
+      if (count >= kFreeWordLimit) {
+        if (!context.mounted) return;
+        _showLimitDialog(context, ref);
+        return;
+      }
+    }
+    if (context.mounted) {
+      context.push('/words/add', extra: query.trim().isNotEmpty ? query.trim() : null);
+    }
+  }
+
+  void _showLimitDialog(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('登録上限に達しました'),
+        content: const Text(
+          '無料版では単語を1,000件まで登録できます。\nプレミアムにアップグレードすると上限が解除されます。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.push('/settings');
+            },
+            child: const Text('プレミアムへ'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final wordsAsync = ref.watch(filteredWordListProvider);
     final query = ref.watch(wordSearchQueryProvider);
+    final wordCount = ref.watch(wordCountProvider).valueOrNull ?? 0;
+    final isPremium = ref.watch(settingsProvider).valueOrNull?.isPremium ?? false;
 
     return AdScaffold(
       appBar: AppBar(
         title: Text(l10n.wordList),
         actions: const [CommonAppBarActions()],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
+          preferredSize: const Size.fromHeight(72),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: l10n.searchWords,
-                prefixIcon: const Icon(Icons.search),
-                border: const OutlineInputBorder(),
-                isDense: true,
-              ),
-              onChanged: (v) =>
-                  ref.read(wordSearchQueryProvider.notifier).state = v,
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchCtrl,
+                  decoration: InputDecoration(
+                    hintText: l10n.searchWords,
+                    prefixIcon: const Icon(Icons.search),
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  onChanged: (v) =>
+                      ref.read(wordSearchQueryProvider.notifier).state = v,
+                ),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    isPremium
+                        ? '$wordCount件（無制限）'
+                        : '$wordCount / $kFreeWordLimit件',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: (!isPremium && wordCount >= kFreeWordLimit)
+                              ? Colors.red
+                              : null,
+                        ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -75,8 +138,7 @@ class _WordListPageState extends ConsumerState<WordListPage> {
                   ElevatedButton.icon(
                     icon: const Icon(Icons.add),
                     label: const Text('新規登録する'),
-                    onPressed: () =>
-                        context.push('/words/add', extra: query.trim()),
+                    onPressed: () => _onAddWord(context, ref, query),
                   ),
                 ],
               ),
@@ -110,7 +172,7 @@ class _WordListPageState extends ConsumerState<WordListPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/words/add'),
+        onPressed: () => _onAddWord(context, ref, ''),
         child: const Icon(Icons.add),
       ),
     );

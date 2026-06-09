@@ -15,8 +15,8 @@ from language_learn.features.words.service import get_word_by_text
 
 # ---- JSON エクスポート ----
 
-def export_json(db: Session) -> dict:
-    """全単語データを JSON エクスポート用の辞書形式で返す。"""
+def export_json(db: Session) -> list:
+    """全単語データを JSON エクスポート用のリスト形式で返す。スマートフォンアプリと互換のフォーマット。"""
     words = db.query(Word).order_by(Word.created_at.asc()).all()
     result = []
     for word in words:
@@ -25,12 +25,12 @@ def export_json(db: Session) -> dict:
             "reading": word.reading,
             "meaning": word.meaning,
             "part_of_speech": word.part_of_speech,
-            "created_at": word.created_at.isoformat(),
             "example_sentences": [
                 {
                     "sentence_en": s.sentence_en,
                     "sentence_ja": s.sentence_ja,
                     "order": s.order,
+                    "label": s.label,
                 }
                 for s in word.example_sentences
             ],
@@ -45,16 +45,21 @@ def export_json(db: Session) -> dict:
                 for src in word.sources
             ],
         })
-    return {"version": "1.0", "words": result, "exported_at": datetime.now(timezone.utc).isoformat()}
+    return result
 
 
 # ---- JSON インポート ----
 
-def import_json(db: Session, data: dict) -> ImportResult:
-    """JSON 形式のデータをインポートする。重複単語はスキップして件数を報告する。"""
-    words_data = data.get("words", [])
+def import_json(db: Session, data: dict | list) -> ImportResult:
+    """JSON 形式のデータをインポートする。重複単語はスキップして件数を報告する。
+    配列形式 ([{...}]) とオブジェクト形式 ({"words": [...]}) の両方を受け付ける。
+    """
+    if isinstance(data, list):
+        words_data = data
+    else:
+        words_data = data.get("words", [])
     if not isinstance(words_data, list):
-        raise ExportImportError("JSON フォーマットが正しくありません。'words' キーが必要です。")
+        raise ExportImportError("JSON フォーマットが正しくありません。配列か 'words' キーが必要です。")
 
     result = ImportResult()
     now = datetime.now(timezone.utc)
@@ -87,6 +92,7 @@ def import_json(db: Session, data: dict) -> ImportResult:
                     sentence_en=sent.get("sentence_en", ""),
                     sentence_ja=sent.get("sentence_ja", ""),
                     order=sent.get("order", 1),
+                    label=sent.get("label"),
                 ))
 
             for src in item.get("sources", []):

@@ -3,7 +3,6 @@
 name = "language-learn-app"
 version = "0.1.9"
 description = "外国語学習単語帳アプリ（日本語話者向け英語学習）"
-readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.115.0",

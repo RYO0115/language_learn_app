@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../words/data/word_repository.dart';
+import '../../words/domain/example_sentence.dart' as domain;
 import '../../words/domain/word.dart';
+import '../../words/domain/word_source.dart' as domain;
 import '../../../core/exceptions/app_exception.dart';
 
 final exportServiceProvider = Provider<ExportService>((ref) {
@@ -39,19 +41,62 @@ class ExportService {
   Future<int> importJson(String content) async {
     final List<dynamic> data;
     try {
-      data = jsonDecode(content) as List<dynamic>;
-    } catch (_) {
+      final decoded = jsonDecode(content);
+      if (decoded is List) {
+        data = decoded;
+      } else if (decoded is Map && decoded['words'] is List) {
+        data = decoded['words'] as List<dynamic>;
+      } else {
+        throw const ImportException('JSON の形式が不正です');
+      }
+    } catch (e) {
+      if (e is ImportException) rethrow;
       throw const ImportException('JSON の形式が不正です');
     }
     var imported = 0;
     for (final item in data) {
       final map = item as Map<String, dynamic>;
       try {
+        final sentences = (map['example_sentences'] as List<dynamic>? ?? [])
+            .map((s) {
+              final sm = s as Map<String, dynamic>;
+              return domain.ExampleSentence(
+                id: 0,
+                wordId: 0,
+                sentenceEn: sm['sentence_en'] as String? ?? '',
+                sentenceJa: sm['sentence_ja'] as String? ?? '',
+                order: sm['order'] as int? ?? 0,
+                label: sm['label'] as String?,
+              );
+            })
+            .toList();
+        final sources = (map['sources'] as List<dynamic>? ?? [])
+            .map((s) {
+              final sm = s as Map<String, dynamic>;
+              final typeStr = sm['source_type'] as String? ?? 'other';
+              final sourceType = domain.SourceType.values.firstWhere(
+                (e) => e.name == typeStr,
+                orElse: () => domain.SourceType.other,
+              );
+              return domain.WordSource(
+                id: 0,
+                wordId: 0,
+                sourceType: sourceType,
+                title: sm['title'] as String?,
+                url: sm['url'] as String?,
+                pageNumber: sm['page_number'] as String?,
+                detail: sm['detail'] as String?,
+                createdAt: DateTime.now(),
+              );
+            })
+            .toList();
         await _wordRepo.createWord(
           word: map['word'] as String,
           reading: map['reading'] as String?,
           meaning: map['meaning'] as String,
           partOfSpeech: map['part_of_speech'] as String?,
+          exampleSentences: sentences,
+          sources: sources,
         );
         imported++;
       } on DuplicateWordException {
@@ -92,6 +137,17 @@ class ExportService {
             .map((s) => {
                   'sentence_en': s.sentenceEn,
                   'sentence_ja': s.sentenceJa,
+                  'order': s.order,
+                  'label': s.label,
+                })
+            .toList(),
+        'sources': w.sources
+            .map((src) => {
+                  'source_type': src.sourceType.name,
+                  'title': src.title,
+                  'url': src.url,
+                  'page_number': src.pageNumber,
+                  'detail': src.detail,
                 })
             .toList(),
       };

@@ -199,12 +199,11 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Checkout latest code
-        uses: actions/checkout@v4
+      - name: Pull latest code
+        run: git -C $HOME/language_learn_app pull
 
       - name: Install / update dependencies
-        working-directory: server_app
-        run: uv sync --frozen
+        run: cd $HOME/language_learn_app/server_app && uv sync --frozen
 
       - name: Restart service
         run: sudo systemctl restart language-learn
@@ -214,6 +213,12 @@ jobs:
           sleep 3
           sudo systemctl status language-learn --no-pager
 ```
+
+> **`actions/checkout@v4` を使わない理由:**
+> `checkout@v4` はコードをランナーのワークスペース（`~/actions-runner/_work/...`）に展開する。
+> しかし systemd サービスは `WorkingDirectory=/home/pi/language_learn_app/server_app` を参照しているため、
+> checkout 先とサービスの実行パスが異なり、コードもパッケージも更新されない。
+> `git pull` でサービスが実際に使うディレクトリを直接更新することで問題を回避する。
 
 > **paths フィルターについて:**
 > `server_app/**` を指定することで、Flutter アプリや docs の変更だけの場合はデプロイが走らない。

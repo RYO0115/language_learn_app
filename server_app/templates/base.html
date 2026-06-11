@@ -154,6 +154,8 @@
           📚 単語帳
           <span class="text-xs text-blue-200 font-mono font-normal hidden sm:inline">v{{ app_version }}</span>
         </a>
+        <!-- 設定アイコン（スマホのみ） -->
+        <a href="/settings" class="sm:hidden text-blue-200 hover:text-white text-xl ml-2" title="設定">⚙️</a>
         <div class="flex items-center gap-2 text-sm font-medium">
           <!-- US / UK 発音切り替え（スマホでは非表示） -->
           <div class="hidden sm:flex rounded-lg overflow-hidden border border-blue-400" title="発音のアクセントを切り替え">
@@ -188,6 +190,7 @@
             <a href="/quiz" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">テスト</a>
             <a href="/streak" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">実績</a>
             <a href="/export" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">I/E</a>
+            <a href="/settings" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap" title="設定">⚙️</a>
           </div>
         </div>
       </div>

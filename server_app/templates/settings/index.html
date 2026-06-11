@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}設定 — 単語帳アプリ{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+  <h1 class="text-2xl font-bold text-gray-800">設定</h1>
+
+  <!-- 発音設定 -->
+  <div class="bg-white rounded-xl shadow p-6 space-y-4">
+    <h2 class="font-semibold text-gray-700">🔊 発音設定</h2>
+
+    <!-- US / UK 切り替え -->
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-gray-600">アクセント</label>
+      <div class="flex rounded-lg overflow-hidden border border-gray-300 w-fit">
+        <button id="btn-locale-us"
+                onclick="setLocale('en-US')"
+                class="px-6 py-2.5 text-sm font-bold transition-colors duration-150">
+          🇺🇸 US英語
+        </button>
+        <div class="w-px bg-gray-300"></div>
+        <button id="btn-locale-uk"
+                onclick="setLocale('en-GB')"
+                class="px-6 py-2.5 text-sm font-bold transition-colors duration-150">
+          🇬🇧 UK英語
+        </button>
+      </div>
+      <p class="text-xs text-gray-400">単語の読み上げ音声のアクセントを切り替えます。</p>
+    </div>
+
+    <!-- 音量 -->
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-gray-600">音量</label>
+      <div class="flex items-center gap-3">
+        <span id="volume-icon" class="text-xl select-none">🔊</span>
+        <input type="range" id="volume-slider"
+               min="0" max="1" step="0.05" value="1"
+               oninput="setVolume(this.value)"
+               class="volume-slider w-48">
+        <span id="volume-pct" class="text-sm text-gray-500 w-10 text-right">100%</span>
+      </div>
+    </div>
+
+    <!-- テスト再生 -->
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-gray-600">テスト再生</label>
+      <button onclick="pronounce('Hello, this is a test.', 1.0)"
+              class="px-4 py-2 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium hover:bg-blue-100 transition-colors duration-150">
+        ▶ 再生する
+      </button>
+      <p class="text-xs text-gray-400">現在の設定で音声を確認できます。</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // 音量パーセント表示を更新
+  function updateVolumePct(val) {
+    var pct = document.getElementById("volume-pct");
+    if (pct) pct.textContent = Math.round(val * 100) + "%";
+  }
+
+  // setVolume をラップして % 表示も更新
+  var _origSetVolume = window.setVolume;
+  window.setVolume = function(val) {
+    _origSetVolume(val);
+    updateVolumePct(parseFloat(val));
+  };
+
+  // US/UK ボタンのスタイル（設定ページ用）
+  var CLS_ACTIVE_PAGE   = "px-6 py-2.5 text-sm font-bold bg-blue-600 text-white transition-colors duration-150";
+  var CLS_INACTIVE_PAGE = "px-6 py-2.5 text-sm font-bold bg-white text-gray-600 hover:bg-gray-50 transition-colors duration-150";
+
+  var _origSetLocale = window.setLocale;
+  window.setLocale = function(locale) {
+    _origSetLocale(locale);
+    var btnUS = document.getElementById("btn-locale-us");
+    var btnUK = document.getElementById("btn-locale-uk");
+    if (btnUS) btnUS.className = (locale === "en-US") ? CLS_ACTIVE_PAGE : CLS_INACTIVE_PAGE;
+    if (btnUK) btnUK.className = (locale === "en-GB") ? CLS_ACTIVE_PAGE : CLS_INACTIVE_PAGE;
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var slider = document.getElementById("volume-slider");
+    var locale = localStorage.getItem("tts-locale") || "en-US";
+    var volume = parseFloat(localStorage.getItem("tts-volume") ?? "1.0");
+
+    if (slider) {
+      slider.value = volume;
+      updateVolumePct(volume);
+    }
+
+    // ボタン初期スタイル
+    var btnUS = document.getElementById("btn-locale-us");
+    var btnUK = document.getElementById("btn-locale-uk");
+    if (btnUS) btnUS.className = (locale === "en-US") ? CLS_ACTIVE_PAGE : CLS_INACTIVE_PAGE;
+    if (btnUK) btnUK.className = (locale === "en-GB") ? CLS_ACTIVE_PAGE : CLS_INACTIVE_PAGE;
+  });
+</script>
+{% endblock %}

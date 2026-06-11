@@ -27,6 +27,8 @@ from language_learn.features.streak.router import router as streak_router
 from language_learn.features.streak.router import set_templates as streak_set_templates
 from language_learn.features.export.router import router as export_router
 from language_learn.features.export.router import set_templates as export_set_templates
+from language_learn.features.settings.router import router as settings_router
+from language_learn.features.settings.router import set_templates as settings_set_templates
 
 # プロジェクトルートディレクトリ
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -44,6 +46,7 @@ ai_set_templates(templates)
 quiz_set_templates(templates)
 streak_set_templates(templates)
 export_set_templates(templates)
+settings_set_templates(templates)
 
 # 静的ファイル配信
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -54,6 +57,7 @@ app.include_router(ai_router)
 app.include_router(quiz_router)
 app.include_router(streak_router)
 app.include_router(export_router)
+app.include_router(settings_router)
 
 
 @app.on_event("startup")

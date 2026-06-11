@@ -254,3 +254,7 @@ smartphone_app/ios/**/*.xcworkspace/xcuserdata/
 # Claude Code（個人設定・メモリ等）
 .claude/
 
+# Vim スワップファイル
+*.swp
+*.swo
+

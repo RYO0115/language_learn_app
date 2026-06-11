@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -29,10 +29,9 @@ def set_templates(t: Jinja2Templates) -> None:
     templates = t
 
 
-@router.get("/export", response_class=HTMLResponse)
-def export_page(request: Request):
-    """エクスポート/インポートページを返す。"""
-    return templates.TemplateResponse(request, "export/index.html", {})
+@router.get("/export")
+def export_page():
+    return RedirectResponse(url="/settings", status_code=301)
 
 
 @router.get("/export/download/json")
@@ -71,7 +70,7 @@ async def import_file(
     if not file.filename:
         return templates.TemplateResponse(
             request,
-            "export/index.html",
+            "settings/index.html",
             {"error": "ファイルが選択されていません。"},
             status_code=400,
         )
@@ -90,20 +89,20 @@ async def import_file(
         else:
             return templates.TemplateResponse(
                 request,
-                "export/index.html",
+                "settings/index.html",
                 {"error": "JSON または CSV ファイルをアップロードしてください。"},
                 status_code=400,
             )
     except (ExportImportError, json.JSONDecodeError, UnicodeDecodeError) as e:
         return templates.TemplateResponse(
             request,
-            "export/index.html",
+            "settings/index.html",
             {"error": f"インポートに失敗しました: {e}"},
             status_code=400,
         )
 
     return templates.TemplateResponse(
         request,
-        "export/index.html",
+        "settings/index.html",
         {"import_result": result},
     )

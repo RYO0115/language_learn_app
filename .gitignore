@@ -249,4 +249,5 @@ smartphone_app/ios/Runner/GeneratedPluginRegistrant.*
 smartphone_app/ios/Flutter/App.framework
 smartphone_app/ios/Flutter/Flutter.framework
 smartphone_app/ios/Flutter/flutter_assets/
+smartphone_app/ios/**/*.xcworkspace/xcuserdata/
 

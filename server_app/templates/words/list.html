@@ -79,8 +79,8 @@
                      title="すべて選択">
             </th>
             <th class="px-4 py-3 text-left">単語</th>
-            <th class="px-4 py-3 text-left">品詞</th>
             <th class="px-4 py-3 text-left">意味</th>
+            <th class="px-4 py-3 text-left">品詞</th>
             <th class="px-4 py-3 text-center">正答率</th>
             <th class="px-4 py-3 text-center">回答数</th>
             <th class="px-4 py-3 text-left">登録日</th>
@@ -107,8 +107,8 @@
                         title="発音を聞く">🔊</button>
               </div>
             </td>
-            <td class="px-4 py-3 text-gray-500 text-xs">{{ word.part_of_speech or "—" }}</td>
             <td class="px-4 py-3 text-gray-700 max-w-xs truncate">{{ word.meaning }}</td>
+            <td class="px-4 py-3 text-gray-500 text-xs">{{ word.part_of_speech or "—" }}</td>
             <td class="px-4 py-3 text-center">
               {% if word.accuracy is not none %}
                 <span class="px-2 py-0.5 rounded-full text-xs font-medium

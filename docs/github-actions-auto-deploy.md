@@ -145,8 +145,8 @@ vi には「ノーマルモード」と「インサートモード」の2つの�
 以下の内容を入力して保存する:
 
 ```
-pi ALL=(ALL) NOPASSWD: /bin/systemctl restart language-learn
-pi ALL=(ALL) NOPASSWD: /bin/systemctl status language-learn
+pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart language-learn
+pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl status language-learn
 ```
 
 > **Q: deploy.yml の中で sudo コマンドを使うとパスワードを求められないか?**

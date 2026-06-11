@@ -124,7 +124,7 @@ sudo ufw allow ssh
 
 # アプリポートを自宅ネットワーク内のみ許可
 # ※ 自宅のネットワークアドレスに合わせて変更（大抵は 192.168.1.0/24 か 192.168.0.0/24）
-sudo ufw allow from 192.168.1.0/24 to any port 8000
+sudo ufw allow from 192.168.1.0/24 to any port 29000
 
 # UFW を有効化
 sudo ufw enable
@@ -215,7 +215,10 @@ uv run python -c "from language_learn.main import app; print('OK')"
 
 ### 4-3. 環境変数ファイルを作成する
 
+`.env.example` は `~/language_learn_app/server_app/` にあります。
+
 ```bash
+cd ~/language_learn_app/server_app
 cp .env.example .env
 nano .env
 ```
@@ -239,10 +242,10 @@ DEBUG=false
 ### 4-4. 動作確認（テスト起動）
 
 ```bash
-uv run uvicorn language_learn.main:app --host 0.0.0.0 --port 8000
+uv run uvicorn language_learn.main:app --host 0.0.0.0 --port 29000
 ```
 
-Mac のブラウザで `http://raspberrypi.local:8000` を開いてアプリが表示されることを確認する。
+Mac のブラウザで `http://raspberrypi.local:29000` を開いてアプリが表示されることを確認する。
 確認できたら `Ctrl + C` で終了する。
 
 ---
@@ -252,12 +255,7 @@ Mac のブラウザで `http://raspberrypi.local:8000` を開いてアプリが�
 Pi の電源を入れるだけでアプリが自動で起動するよう設定する。
 
 ```bash
-sudo nano /etc/systemd/system/language-learn.service
-```
-
-以下の内容を貼り付ける:
-
-```ini
+sudo tee /etc/systemd/system/language-learn.service << 'EOF'
 [Unit]
 Description=Language Learn App
 After=network-online.target
@@ -266,9 +264,9 @@ Wants=network-online.target
 [Service]
 User=pi
 Group=pi
-WorkingDirectory=/home/pi/language_learn_app
+WorkingDirectory=/home/pi/language_learn_app/server_app
 Environment="PATH=/home/pi/.local/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=/home/pi/language_learn_app/.venv/bin/uvicorn language_learn.main:app --host 0.0.0.0 --port 8000
+ExecStart=/home/pi/language_learn_app/server_app/.venv/bin/uvicorn language_learn.main:app --host 0.0.0.0 --port 29000
 Restart=always
 RestartSec=5s
 StandardOutput=journal
@@ -276,6 +274,7 @@ StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
+EOF
 ```
 
 ```bash
@@ -326,7 +325,7 @@ tailscale ip -4
 Tailscale アプリで VPN を ON にした状態で、Safari を開き以下の URL を入力する:
 
 ```
-http://100.x.x.x:8000
+http://100.x.x.x:29000
 ```
 
 > `100.x.x.x` はステップ 6-2 で確認した Pi の Tailscale IP アドレス
@@ -334,8 +333,8 @@ http://100.x.x.x:8000
 ### 6-5. ファイアウォールに Tailscale インターフェースを追加する
 
 ```bash
-# Tailscale 経由のアクセスのみポート 8000 を許可する
-sudo ufw allow in on tailscale0 to any port 8000
+# Tailscale 経由のアクセスのみポート 29000 を許可する
+sudo ufw allow in on tailscale0 to any port 29000
 sudo ufw reload
 ```
 
@@ -406,11 +405,11 @@ tailscale ping <iPhone の Tailscale IP>
 sudo systemctl restart tailscaled
 ```
 
-### ポート 8000 に接続できない
+### ポート 29000 に接続できない
 
 ```bash
 # アプリが起動しているか確認
-ss -tlnp | grep 8000
+ss -tlnp | grep 29000
 
 # UFW のルールを確認
 sudo ufw status verbose

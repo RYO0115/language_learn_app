@@ -147,43 +147,57 @@
 
   <!-- ナビゲーションバー -->
   <nav class="bg-blue-600 text-white shadow-md">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="/" class="text-xl font-bold tracking-tight hover:opacity-80 flex items-baseline gap-2">
-        📚 単語帳アプリ
-        <span class="text-xs text-blue-200 font-mono font-normal">v{{ app_version }}</span>
-      </a>
-      <div class="flex items-center gap-2 text-sm font-medium flex-wrap">
-        <!-- US / UK 発音切り替えボタングループ（選択中は暗く表示） -->
-        <div class="flex rounded-lg overflow-hidden border border-blue-400" title="発音のアクセントを切り替え">
-          <button id="btn-locale-us"
-                  onclick="setLocale('en-US')"
-                  class="px-3 py-1.5 text-xs font-bold bg-blue-900 text-white transition-colors duration-150 whitespace-nowrap">
-            🇺🇸 US
-          </button>
-          <div class="w-px bg-blue-400 opacity-50"></div>
-          <button id="btn-locale-uk"
-                  onclick="setLocale('en-GB')"
-                  class="px-3 py-1.5 text-xs font-bold bg-blue-600 text-blue-300 hover:bg-blue-700 hover:text-white transition-colors duration-150 whitespace-nowrap">
-            🇬🇧 UK
-          </button>
+    <div class="max-w-5xl mx-auto px-4">
+      <!-- 1行目: タイトル + PC向けコントロール -->
+      <div class="py-3 flex items-center justify-between">
+        <a href="/" class="text-xl font-bold tracking-tight hover:opacity-80 flex items-baseline gap-2 whitespace-nowrap">
+          📚 単語帳
+          <span class="text-xs text-blue-200 font-mono font-normal hidden sm:inline">v{{ app_version }}</span>
+        </a>
+        <div class="flex items-center gap-2 text-sm font-medium">
+          <!-- US / UK 発音切り替え（スマホでは非表示） -->
+          <div class="hidden sm:flex rounded-lg overflow-hidden border border-blue-400" title="発音のアクセントを切り替え">
+            <button id="btn-locale-us"
+                    onclick="setLocale('en-US')"
+                    class="px-3 py-1.5 text-xs font-bold bg-blue-900 text-white transition-colors duration-150 whitespace-nowrap">
+              🇺🇸 US
+            </button>
+            <div class="w-px bg-blue-400 opacity-50"></div>
+            <button id="btn-locale-uk"
+                    onclick="setLocale('en-GB')"
+                    class="px-3 py-1.5 text-xs font-bold bg-blue-600 text-blue-300 hover:bg-blue-700 hover:text-white transition-colors duration-150 whitespace-nowrap">
+              🇬🇧 UK
+            </button>
+          </div>
+
+          <!-- 音量スライダー（スマホでは非表示） -->
+          <div class="hidden sm:flex items-center gap-1.5" title="音量調整">
+            <span id="volume-icon" class="text-sm select-none">🔊</span>
+            <input type="range" id="volume-slider"
+                   min="0" max="1" step="0.05" value="1"
+                   oninput="setVolume(this.value)"
+                   class="volume-slider w-20">
+          </div>
+
+          <!-- 区切り線（PC のみ） -->
+          <div class="hidden sm:block w-px h-5 bg-blue-400 opacity-50 mx-1"></div>
+
+          <!-- ナビリンク（PC: フルテキスト） -->
+          <div class="hidden sm:flex items-center gap-2">
+            <a href="/words" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">単語帳</a>
+            <a href="/quiz" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">テスト</a>
+            <a href="/streak" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">実績</a>
+            <a href="/export" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">I/E</a>
+          </div>
         </div>
+      </div>
 
-        <!-- 音量スライダー -->
-        <div class="flex items-center gap-1.5" title="音量調整">
-          <span id="volume-icon" class="text-sm select-none">🔊</span>
-          <input type="range" id="volume-slider"
-                 min="0" max="1" step="0.05" value="1"
-                 oninput="setVolume(this.value)"
-                 class="volume-slider w-20">
-        </div>
-
-        <!-- 区切り線 -->
-        <div class="w-px h-5 bg-blue-400 opacity-50 mx-1"></div>
-
-        <a href="/words" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">単語帳</a>
-        <a href="/quiz" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">テスト</a>
-        <a href="/streak" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">実績</a>
-        <a href="/export" class="px-4 py-2 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150 whitespace-nowrap">インポート/エクスポート</a>
+      <!-- 2行目: スマホ向けナビリンク -->
+      <div class="sm:hidden flex items-center justify-around pb-2 gap-1 text-sm font-medium border-t border-blue-500 pt-2">
+        <a href="/words" class="flex-1 text-center py-1.5 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">単語帳</a>
+        <a href="/quiz"  class="flex-1 text-center py-1.5 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">テスト</a>
+        <a href="/streak" class="flex-1 text-center py-1.5 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">実績</a>
+        <a href="/export" class="flex-1 text-center py-1.5 rounded-lg border border-blue-400 hover:bg-white hover:text-blue-700 transition-colors duration-150">I/E</a>
       </div>
     </div>
   </nav>

@@ -15,7 +15,9 @@ jobs:
 
     steps:
       - name: Pull latest code
-        run: git -C $HOME/language_learn_app pull
+        run: |
+          git -C $HOME/language_learn_app fetch origin main
+          git -C $HOME/language_learn_app reset --hard origin/main
 
       - name: Install / Update dependencies
         run: cd $HOME/language_learn_app/server_app && uv sync --frozen

@@ -1,0 +1,30 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "server_app/**" # server_appに変更があった場合のみデプロイ
+
+jobs:
+  deploy:
+    name: Deploy server_app
+    runs-on: [self-hosted, raspberry-pi]
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout latest code
+        uses: actions/checkout@v4
+
+      - name: Install / Update dependencies
+        working-directory: server_app
+        run: uv sync --frozen
+
+      - name: Restart Service
+        run: sudo systemctl restart language-learn
+
+      - name: Verify service is running
+        run: |
+          sleep 3
+          sudo systemctl status language-learn --no-pager

@@ -251,3 +251,6 @@ smartphone_app/ios/Flutter/Flutter.framework
 smartphone_app/ios/Flutter/flutter_assets/
 smartphone_app/ios/**/*.xcworkspace/xcuserdata/
 
+# Claude Code（個人設定・メモリ等）
+.claude/
+

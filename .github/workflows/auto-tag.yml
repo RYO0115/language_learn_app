@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - pyproject.toml
+      - server_app/pyproject.toml
 
 jobs:
   tag:
@@ -18,7 +18,7 @@ jobs:
       - name: Read version from pyproject.toml
         id: version
         run: |
-          VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          VERSION=$(grep '^version' server_app/pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
           echo "value=v${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Check if tag already exists

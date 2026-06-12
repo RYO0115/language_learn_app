@@ -35,3 +35,10 @@ jobs:
         run: |
           git tag "${{ steps.version.outputs.value }}"
           git push origin "${{ steps.version.outputs.value }}"
+
+      - name: Create GitHub Release
+        if: steps.tag_exists.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.value }}
+          generate_release_notes: true

@@ -28,4 +28,4 @@ jobs:
       - name: Verify service is running
         run: |
           sleep 3
-          sudo systemctl status language-learn --no-pager
+          systemctl status language-learn --no-pager

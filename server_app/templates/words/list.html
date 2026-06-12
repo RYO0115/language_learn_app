@@ -101,7 +101,7 @@
             <td class="px-4 py-3 font-semibold text-blue-700" onclick="event.stopPropagation()">
               <div class="flex items-center gap-2">
                 <a href="/words/{{ word.id }}" class="hover:underline">{{ word.word }}</a>
-                <button onclick="pronounce(this.dataset.word)"
+                <button type="button" onclick="pronounce(this.dataset.word)"
                         data-word="{{ word.word }}"
                         class="text-blue-300 hover:text-blue-600 transition text-base leading-none flex-shrink-0"
                         title="発音を聞く">🔊</button>

@@ -1,10 +1,13 @@
 # Google Gemini API プロバイダー実装
 # response_schema による構造化出力で複数品詞に対応する
+import re
+
 from google import genai
+from google.genai import errors as genai_errors
 from google.genai import types
 
 from language_learn.config import settings
-from language_learn.core.exceptions import AIServiceError
+from language_learn.core.exceptions import AIRateLimitError, AIServiceError
 from language_learn.features.ai.providers.base import BaseAIProvider
 from language_learn.features.ai.schemas import AIGenerateResponse
 
@@ -22,6 +25,18 @@ _PROMPT = """あなたは英語学習アシスタントです。日本語話者�
 - その品詞の使い方を示す自然な英語例文を 2 件（それぞれ日本語訳付き）
 
 発音記号は IPA 表記で 1 つ提供してください。"""
+
+
+def _extract_retry_delay(error: genai_errors.APIError) -> float | None:
+    """APIError の details から RetryInfo の retryDelay（秒）を取り出す。"""
+    details = getattr(error, "details", None) or {}
+    for item in details.get("error", {}).get("details", []):
+        retry_delay = item.get("retryDelay")
+        if retry_delay:
+            match = re.match(r"([\d.]+)s", retry_delay)
+            if match:
+                return float(match.group(1))
+    return None
 
 
 class GeminiProvider(BaseAIProvider):
@@ -49,6 +64,14 @@ class GeminiProvider(BaseAIProvider):
                     response_schema=AIGenerateResponse,
                 ),
             )
+        except genai_errors.APIError as e:
+            if e.code == 429:
+                raise AIRateLimitError(
+                    "Gemini API のクォータ（利用上限）を超えました。"
+                    "しばらく時間をおいてから再試行してください。",
+                    retry_after_seconds=_extract_retry_delay(e),
+                ) from e
+            raise AIServiceError(f"Gemini API の呼び出しに失敗しました: {e}") from e
         except Exception as e:
             raise AIServiceError(f"Gemini API の呼び出しに失敗しました: {e}") from e
 

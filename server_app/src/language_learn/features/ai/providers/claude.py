@@ -6,7 +6,7 @@ import re
 import anthropic
 
 from language_learn.config import settings
-from language_learn.core.exceptions import AIServiceError
+from language_learn.core.exceptions import AIRateLimitError, AIServiceError
 from language_learn.features.ai.providers.base import BaseAIProvider
 from language_learn.features.ai.schemas import AIGenerateResponse, ExampleSentenceAI, WordMeaningAI
 
@@ -73,6 +73,19 @@ class ClaudeProvider(BaseAIProvider):
                 max_tokens=2048,
                 messages=[{"role": "user", "content": _PROMPT.format(word=word)}],
             )
+        except anthropic.RateLimitError as e:
+            retry_after = None
+            retry_after_header = e.response.headers.get("retry-after")
+            if retry_after_header:
+                try:
+                    retry_after = float(retry_after_header)
+                except ValueError:
+                    retry_after = None
+            raise AIRateLimitError(
+                "Claude API のレート制限・クォータ（利用上限）を超えました。"
+                "しばらく時間をおいてから再試行してください。",
+                retry_after_seconds=retry_after,
+            ) from e
         except anthropic.APIError as e:
             raise AIServiceError(f"Claude API の呼び出しに失敗しました: {e}") from e
 

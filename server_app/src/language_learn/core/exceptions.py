@@ -27,6 +27,14 @@ class AIServiceError(AppError):
     pass
 
 
+class AIRateLimitError(AIServiceError):
+    """AI サービスのレート制限・クォータ超過時に送出する例外。"""
+
+    def __init__(self, message: str, retry_after_seconds: float | None = None):
+        super().__init__(message)
+        self.retry_after_seconds = retry_after_seconds
+
+
 class ExportImportError(AppError):
     """エクスポート/インポート処理でエラーが発生した場合に送出する例外。"""
     pass

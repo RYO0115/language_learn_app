@@ -40,7 +40,8 @@
                   hx-include="#word-input"
                   hx-target="#ai-fields"
                   hx-indicator="#ai-loading"
-                  class="btn-primary whitespace-nowrap h-[42px]">
+                  hx-disabled-elt="this"
+                  class="btn-primary whitespace-nowrap h-[42px] disabled:opacity-50 disabled:cursor-not-allowed">
             ✨ AI で生成
           </button>
         </div>
@@ -152,6 +153,35 @@
     document.getElementById('word-input').value = word;
     document.getElementById('spell-suggestions').innerHTML = '';
   }
+
+  // AI 生成ボタン: 押下後・生成中・生成後 15 秒間は再押下できないようにする
+  const AI_GENERATE_COOLDOWN_MS = 15000;
+  const aiGenerateBtn = document.getElementById('ai-generate-btn');
+
+  function hasGeneratedContent() {
+    const filledFields = document.querySelectorAll(
+      '#ai-fields textarea[name^="meaning_"], #ai-fields input[name^="sentence_en_"], #ai-fields input[name^="sentence_ja_"]'
+    );
+    return Array.from(filledFields).some(el => el.value.trim() !== '');
+  }
+
+  // すでに AI 生成済みの内容がある状態で押された場合は再生成の確認ポップアップを出す
+  aiGenerateBtn.addEventListener('htmx:confirm', function(e) {
+    if (!hasGeneratedContent()) return;
+    e.preventDefault();
+    if (window.confirm('すでに AI 生成された内容があります。再度 AI 生成しますか？')) {
+      e.detail.issueRequest(true);
+    }
+  });
+
+  // 生成中は hx-disabled-elt がボタンを無効化する。
+  // リクエスト完了後は htmx が disabled を解除した直後に再度無効化し、15 秒間維持する。
+  aiGenerateBtn.addEventListener('htmx:afterRequest', function() {
+    aiGenerateBtn.disabled = true;
+    setTimeout(function() {
+      aiGenerateBtn.disabled = false;
+    }, AI_GENERATE_COOLDOWN_MS);
+  });
 
   document.getElementById('word-input').addEventListener('keydown', async function(e) {
     if (e.key === 'Enter') {

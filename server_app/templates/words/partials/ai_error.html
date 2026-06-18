@@ -1,6 +1,12 @@
 <!-- AI 生成エラー表示パーシャル -->
 <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
-  <p class="font-semibold">⚠️ AI 生成に失敗しました</p>
+  <p class="font-semibold">
+    {% if retry_after_seconds is defined %}⏳ AI のレート制限中です{% else %}⚠️ AI 生成に失敗しました{% endif %}
+  </p>
   <p class="mt-1">{{ error }}</p>
-  <p class="mt-2 text-red-500">手動で入力するか、しばらくしてから再試行してください。</p>
+  {% if retry_after_seconds is defined and retry_after_seconds %}
+    <p class="mt-2 text-red-500">約 {{ retry_after_seconds | round(0, 'ceil') | int }} 秒後に再試行してください。</p>
+  {% else %}
+    <p class="mt-2 text-red-500">手動で入力するか、しばらくしてから再試行してください。</p>
+  {% endif %}
 </div>

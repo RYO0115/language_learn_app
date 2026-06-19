@@ -18,8 +18,11 @@ class Settings(BaseSettings):
     # データベース設定
     database_url: str = f"sqlite:///{BASE_DIR}/data/language_learn.db"
 
-    # AI プロバイダー設定（"claude" または "gemini" を指定）
-    ai_provider: Literal["claude", "gemini"] = "claude"
+    # AI プロバイダー設定（"claude" または "gemini" を指定。"stub" はテスト専用）
+    ai_provider: Literal["claude", "gemini", "stub"] = "claude"
+
+    # stub プロバイダー使用時、true ならレート制限エラーを強制発生させる（テスト専用）
+    ai_stub_force_rate_limit: bool = False
 
     # Anthropic (Claude) API 設定
     anthropic_api_key: str = ""

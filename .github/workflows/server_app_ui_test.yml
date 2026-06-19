@@ -1,0 +1,31 @@
+name: server_app UI Test
+
+on:
+  push:
+    branches: ["feature/**", "fix/**", "test/**"]
+    paths:
+      - "server_app/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "server_app/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync
+        working-directory: server_app
+
+      - name: Install Playwright browser (Chromium)
+        run: uv run playwright install --with-deps chromium
+        working-directory: server_app
+
+      - name: Run UI tests
+        run: uv run pytest tests/ui
+        working-directory: server_app

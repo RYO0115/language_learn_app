@@ -165,6 +165,15 @@
     return Array.from(filledFields).some(el => el.value.trim() !== '');
   }
 
+  // htmx はデフォルトで 2xx 以外のレスポンスをスワップしないため、
+  // /api/ai/generate が 429/500 を返した場合もエラーパーシャルが表示されるようにする
+  document.body.addEventListener('htmx:beforeSwap', function(e) {
+    if (e.detail.target && e.detail.target.id === 'ai-fields' && e.detail.xhr.status >= 400) {
+      e.detail.shouldSwap = true;
+      e.detail.isError = false;
+    }
+  });
+
   // すでに AI 生成済みの内容がある状態で押された場合は再生成の確認ポップアップを出す
   aiGenerateBtn.addEventListener('htmx:confirm', function(e) {
     if (!hasGeneratedContent()) return;

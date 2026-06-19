@@ -24,6 +24,10 @@ def get_ai_provider() -> BaseAIProvider:
         from language_learn.features.ai.providers.claude import ClaudeProvider
         return ClaudeProvider()
 
+    if provider_name == "stub":
+        from language_learn.features.ai.providers.stub import StubProvider
+        return StubProvider()
+
     # 設定値が不正な場合（Literal 型で弾かれるが念のため）
     raise AIServiceError(
         f"不明な AI プロバイダー: '{provider_name}'。"

@@ -1,7 +1,7 @@
 # 言語学習単語帳アプリ プロジェクト設定
 [project]
 name = "language-learn-app"
-version = "0.2.8"
+version = "0.3.0"
 description = "外国語学習単語帳アプリ（日本語話者向け英語学習）"
 requires-python = ">=3.12"
 dependencies = [
@@ -35,7 +35,7 @@ select = ["E", "F", "W", "I"]
 ignore = ["E501"]
 
 [tool.bumpversion]
-current_version = "0.2.8"
+current_version = "0.3.0"
 commit = true
 tag = false
 tag_name = "v{new_version}"

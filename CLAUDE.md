@@ -34,7 +34,7 @@ language_learn_app/
 | `docs/server_app/機能一覧.md` | 現在実装済みの機能一覧 |
 | `docs/server_app/設計書.md` | アーキテクチャ・DB スキーマ・設定値 |
 | `docs/server_app/仕様書.md` | 全 API エンドポイントの詳細仕様 |
-| `docs/server_app/テスト一覧.md` | 実装済み UI テスト（Playwright）の一覧 |
+| `docs/server_app/テスト一覧.md` | 実装済みテスト（UI テスト・ユニットテスト）の一覧 |
 
 これらのドキュメントを確認したうえで、既存機能との整合性を考慮しながら実装方針を検討すること。
 
@@ -51,9 +51,11 @@ language_learn_app/
 
 `server_app` の機能を追加・修正・削除した場合は、ドキュメント更新と同様に**毎回必ず**以下を行うこと。
 
-1. `server_app/tests/ui/` に対応する Playwright UI テストを追加または更新する
-   （既存テストの対象範囲内の変更であれば、新規ファイルではなく既存テストの修正でよい）
+1. 対応するテストを追加または更新する
+   - ブラウザでの見た目・操作（HTMX/JS の挙動含む）を検証すべき場合: `server_app/tests/ui/` に Playwright UI テスト
+   - サービス層のロジック単体を決定的に検証したい場合（ランダム性・日時条件など UI 越しでは検証しづらいもの）: `server_app/tests/unit/` にユニットテスト
+   - （既存テストの対象範囲内の変更であれば、新規ファイルではなく既存テストの修正でよい）
 2. `docs/server_app/テスト一覧.md` に追加・変更したテストケースを追記し、「最終更新」日付・バージョンを更新する
-3. `cd server_app && uv run pytest tests/ui` を実行し、全テストが green であることを確認する
+3. `cd server_app && uv run pytest tests/unit tests/ui` を実行し、全テストが green であることを確認する
 
 テストを追加せずに機能追加・修正を完了報告しないこと。UI に影響しない内部実装のみの変更（外部の振る舞いが変わらないリファクタ等）は対象外でよいが、判断に迷う場合はテストを追加する。

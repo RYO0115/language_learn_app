@@ -3,7 +3,7 @@
 import random
 from datetime import datetime, timezone
 
-from sqlalchemy import func
+from sqlalchemy import Integer, func
 from sqlalchemy.orm import Session
 
 from language_learn.config import settings
@@ -12,14 +12,21 @@ from language_learn.features.quiz.models import QuizAnswer, QuizSession, QuizSes
 from language_learn.features.quiz.schemas import QuizResultResponse, QuizWordResult
 from language_learn.features.words.models import Word
 
+# 出題済み（テスト済み）単語のうち、正答率に関わらず「未出題期間ベース」で
+# 優先的に再出題するスロットの割合。正答率が高い単語でも、長期間出題されていなければ
+# このスロットで定期的に再出題される（スペースド・リピティション的な振る舞い）。
+STALE_WORD_QUOTA_RATIO = 0.1
+
 
 def select_quiz_words(db: Session, count: int) -> list[int]:
     """クイズに出題する単語 ID リストを選択する。
 
     優先度:
     1. 一度もテストしていない単語（ランダム順）
-    2. 正答率が低い単語（低い順、同率はランダム）
-    3. それ以外の単語（ランダム順）
+    2. 残りスロットの一部（最大 STALE_WORD_QUOTA_RATIO 割合）は、
+       正答率に関わらず最後に出題してから最も時間が経過している単語を優先する
+    3. 正答率が低い単語（低い順、同率はランダム）
+    4. それ以外の単語（ランダム順）
 
     合計 count 件（登録単語数が少ない場合は全件）を返す。
     """
@@ -33,9 +40,7 @@ def select_quiz_words(db: Session, count: int) -> list[int]:
         db.query(
             QuizAnswer.word_id,
             func.count(QuizAnswer.id).label("total"),
-            func.sum(
-                func.cast(QuizAnswer.is_correct, __import__("sqlalchemy").Integer)
-            ).label("correct"),
+            func.sum(func.cast(QuizAnswer.is_correct, Integer)).label("correct"),
         )
         .group_by(QuizAnswer.word_id)
         .all()
@@ -43,22 +48,52 @@ def select_quiz_words(db: Session, count: int) -> list[int]:
     for row in rows:
         answer_stats[row.word_id] = (row.total or 0, row.correct or 0)
 
+    # 単語ごとの最終出題日時: word_id -> last_answered_at
+    last_answered_at: dict[int, datetime] = {
+        row.word_id: row.last_answered_at
+        for row in (
+            db.query(
+                QuizAnswer.word_id,
+                func.max(QuizAnswer.answered_at).label("last_answered_at"),
+            )
+            .group_by(QuizAnswer.word_id)
+            .all()
+        )
+    }
+
     # 未テストの単語
     untested = [wid for wid in all_word_ids if wid not in answer_stats]
     random.shuffle(untested)
 
-    # テスト済みを正答率でソート（低い順）
-    tested = [
-        wid for wid in all_word_ids if wid in answer_stats
-    ]
-    tested.sort(
-        key=lambda wid: answer_stats[wid][1] / answer_stats[wid][0]
-        if answer_stats[wid][0] > 0
-        else 0.0
-    )
+    # テスト済みの単語（未出題期間優先スロット用に分離する前の全体）
+    tested = [wid for wid in all_word_ids if wid in answer_stats]
 
-    # 優先度順に結合してスライス
-    selected = (untested + tested)[:count]
+    selected: list[int] = []
+    remaining = count
+
+    take_untested = untested[:remaining]
+    selected.extend(take_untested)
+    remaining -= len(take_untested)
+
+    if remaining > 0 and tested:
+        # 未出題期間が長い順（古い順）に並べ、一定割合を正答率に関わらず優先採用する
+        stale_quota = min(remaining, max(1, int(remaining * STALE_WORD_QUOTA_RATIO)))
+        stale_sorted = sorted(tested, key=lambda wid: last_answered_at[wid])
+        stale_candidates = stale_sorted[:stale_quota]
+        selected.extend(stale_candidates)
+        remaining -= len(stale_candidates)
+
+        # 残りは正答率が低い順（同率はランダム）に採用する
+        stale_candidate_set = set(stale_candidates)
+        rest = [wid for wid in tested if wid not in stale_candidate_set]
+        random.shuffle(rest)
+        rest.sort(
+            key=lambda wid: answer_stats[wid][1] / answer_stats[wid][0]
+            if answer_stats[wid][0] > 0
+            else 0.0
+        )
+        selected.extend(rest[:remaining])
+
     # 最終的にシャッフルして出題順をランダム化
     random.shuffle(selected)
     return selected

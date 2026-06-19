@@ -1,8 +1,8 @@
-name: server_app UI Test
+name: server_app Test
 
 on:
   push:
-    branches: ["feature/**", "fix/**", "test/**"]
+    branches: ["feature/**", "fix/**", "test/**", "docs/**"]
     paths:
       - "server_app/**"
   pull_request:
@@ -26,6 +26,6 @@ jobs:
         run: uv run playwright install --with-deps chromium
         working-directory: server_app
 
-      - name: Run UI tests
-        run: uv run pytest tests/ui
+      - name: Run tests
+        run: uv run pytest tests/unit tests/ui
         working-directory: server_app

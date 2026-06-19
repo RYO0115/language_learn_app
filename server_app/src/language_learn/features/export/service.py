@@ -2,7 +2,6 @@
 # JSON・CSV 形式でのデータ書き出し・読み込みを担当する
 import csv
 import io
-import json
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -11,7 +10,6 @@ from language_learn.core.exceptions import ExportImportError
 from language_learn.features.export.schemas import ImportResult
 from language_learn.features.words.models import ExampleSentence, Word, WordSource
 from language_learn.features.words.service import get_word_by_text
-
 
 # ---- JSON エクスポート ----
 

@@ -160,13 +160,14 @@ def word_detail_page(request: Request, word_id: int, db: Session = Depends(get_d
         raise HTTPException(status_code=404, detail="単語が見つかりません")
 
     # 正答率を取得
-    from language_learn.features.quiz.models import QuizAnswer
     from sqlalchemy import func
+
+    from language_learn.features.quiz.models import QuizAnswer
 
     total = db.query(func.count(QuizAnswer.id)).filter(QuizAnswer.word_id == word_id).scalar() or 0
     correct = (
         db.query(func.count(QuizAnswer.id))
-        .filter(QuizAnswer.word_id == word_id, QuizAnswer.is_correct == True)
+        .filter(QuizAnswer.word_id == word_id, QuizAnswer.is_correct.is_(True))
         .scalar()
         or 0
     )

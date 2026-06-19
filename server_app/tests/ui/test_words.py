@@ -1,6 +1,5 @@
-from playwright.sync_api import Page, expect
-
 from helpers import add_word_via_ai_stub, unique_word
+from playwright.sync_api import Page, expect
 
 
 def test_add_word_page_loads(page: Page, live_server: str):

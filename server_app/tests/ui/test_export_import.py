@@ -1,8 +1,7 @@
 import json
 
-from playwright.sync_api import Page, expect
-
 from helpers import unique_word
+from playwright.sync_api import Page, expect
 
 
 def test_export_redirects_to_settings(page: Page, live_server: str):

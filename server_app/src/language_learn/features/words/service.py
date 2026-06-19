@@ -23,6 +23,7 @@ def _attach_accuracy(db: Session, word_id: int) -> tuple[float | None, int]:
     """
     # 遅延インポート: quiz モデルは words に依存しないが、words から quiz を参照するため
     from sqlalchemy import Integer as SAInteger
+
     from language_learn.features.quiz.models import QuizAnswer
 
     rows = (
@@ -123,7 +124,9 @@ def list_words(
 ) -> list[WordListItem]:
     """単語一覧を取得する。ソート・検索フィルタに対応。"""
     # 遅延インポートで循環参照を回避
-    from sqlalchemy import Integer as SAInteger, case
+    from sqlalchemy import Integer as SAInteger
+    from sqlalchemy import case
+
     from language_learn.features.quiz.models import QuizAnswer
 
     # 正答率サブクエリ
@@ -131,7 +134,7 @@ def list_words(
         db.query(
             QuizAnswer.word_id.label("word_id"),
             func.count(QuizAnswer.id).label("total"),
-            func.sum(case((QuizAnswer.is_correct == True, 1), else_=0)).label("correct"),
+            func.sum(case((QuizAnswer.is_correct.is_(True), 1), else_=0)).label("correct"),
         )
         .group_by(QuizAnswer.word_id)
         .subquery()
@@ -169,7 +172,7 @@ def list_words(
         total_q = db.query(func.count(QuizAnswer.id)).filter(QuizAnswer.word_id == w.id).scalar() or 0
         correct_q = (
             db.query(func.count(QuizAnswer.id))
-            .filter(QuizAnswer.word_id == w.id, QuizAnswer.is_correct == True)
+            .filter(QuizAnswer.word_id == w.id, QuizAnswer.is_correct.is_(True))
             .scalar()
             or 0
         )

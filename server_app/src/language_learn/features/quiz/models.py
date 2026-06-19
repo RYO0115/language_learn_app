@@ -55,7 +55,7 @@ class QuizSessionWord(Base):
 
     session: Mapped["QuizSession"] = relationship("QuizSession", back_populates="session_words")
     # 文字列参照で循環インポートを回避
-    word: Mapped["Word"] = relationship("Word")  # type: ignore[name-defined]
+    word: Mapped["Word"] = relationship("Word")  # type: ignore[name-defined]  # noqa: F821
 
 
 class QuizAnswer(Base):
@@ -79,4 +79,4 @@ class QuizAnswer(Base):
 
     session: Mapped["QuizSession"] = relationship("QuizSession", back_populates="answers")
     # 文字列参照で循環インポートを回避
-    word: Mapped["Word"] = relationship("Word")  # type: ignore[name-defined]
+    word: Mapped["Word"] = relationship("Word")  # type: ignore[name-defined]  # noqa: F821

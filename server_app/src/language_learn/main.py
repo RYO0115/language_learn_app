@@ -9,26 +9,25 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from language_learn.config import settings
-from language_learn.core.database import engine
 from language_learn.core.base_model import Base
+from language_learn.core.database import engine
+from language_learn.features.ai.router import router as ai_router
+from language_learn.features.ai.router import set_templates as ai_set_templates
+from language_learn.features.export.router import router as export_router
+from language_learn.features.export.router import set_templates as export_set_templates
+from language_learn.features.quiz.models import QuizAnswer, QuizSession, QuizSessionWord  # noqa: F401
+from language_learn.features.quiz.router import router as quiz_router
+from language_learn.features.quiz.router import set_templates as quiz_set_templates
+from language_learn.features.settings.router import router as settings_router
+from language_learn.features.settings.router import set_templates as settings_set_templates
+from language_learn.features.streak.models import StudyRecord  # noqa: F401
+from language_learn.features.streak.router import router as streak_router
+from language_learn.features.streak.router import set_templates as streak_set_templates
 
 # 全モデルをインポートして SQLAlchemy のメタデータに登録する（create_all より前に必要）
 from language_learn.features.words.models import ExampleSentence, Word, WordSource  # noqa: F401
-from language_learn.features.quiz.models import QuizAnswer, QuizSession, QuizSessionWord  # noqa: F401
-from language_learn.features.streak.models import StudyRecord  # noqa: F401
-
 from language_learn.features.words.router import router as words_router
 from language_learn.features.words.router import set_templates as words_set_templates
-from language_learn.features.ai.router import router as ai_router
-from language_learn.features.ai.router import set_templates as ai_set_templates
-from language_learn.features.quiz.router import router as quiz_router
-from language_learn.features.quiz.router import set_templates as quiz_set_templates
-from language_learn.features.streak.router import router as streak_router
-from language_learn.features.streak.router import set_templates as streak_set_templates
-from language_learn.features.export.router import router as export_router
-from language_learn.features.export.router import set_templates as export_set_templates
-from language_learn.features.settings.router import router as settings_router
-from language_learn.features.settings.router import set_templates as settings_set_templates
 
 # プロジェクトルートディレクトリ
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -78,9 +77,10 @@ def startup_event() -> None:
 def dashboard(request: Request):
     """ダッシュボードページを返す。単語数・ストリーク情報を表示する。"""
     from sqlalchemy.orm import Session
+
     from language_learn.core.database import SessionLocal
-    from language_learn.features.words.service import get_word_count
     from language_learn.features.streak.service import get_streak_info
+    from language_learn.features.words.service import get_word_count
 
     db: Session = SessionLocal()
     try:

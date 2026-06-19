@@ -1,6 +1,5 @@
-from playwright.sync_api import Page, expect
-
 from helpers import unique_word
+from playwright.sync_api import Page, expect
 
 
 def test_ai_generate_fills_form_with_stub_data(page: Page, live_server: str):

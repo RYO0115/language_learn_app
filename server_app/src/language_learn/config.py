@@ -2,6 +2,7 @@
 # 環境変数（.env ファイル）から設定を読み込む
 from pathlib import Path
 from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # プロジェクトルートディレクトリ

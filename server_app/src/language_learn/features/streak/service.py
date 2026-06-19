@@ -105,8 +105,8 @@ def _calculate_longest_streak(study_dates: set[date]) -> int:
 
 def get_calendar_data(db: Session, year: int, month: int) -> dict[int, bool]:
     """指定年月のカレンダー用データを返す。日→学習済みかどうかのマップ。"""
-    from datetime import date as dt
     import calendar
+    from datetime import date as dt
 
     _, last_day = calendar.monthrange(year, month)
     start = dt(year, month, 1)

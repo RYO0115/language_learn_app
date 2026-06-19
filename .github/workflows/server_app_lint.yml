@@ -1,0 +1,27 @@
+name: server_app Lint
+
+on:
+  push:
+    branches: ["feature/**", "fix/**", "test/**", "docs/**"]
+    paths:
+      - "server_app/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "server_app/**"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync
+        working-directory: server_app
+
+      - name: Run ruff check
+        run: uv run ruff check .
+        working-directory: server_app

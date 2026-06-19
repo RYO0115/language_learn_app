@@ -105,7 +105,7 @@ def get_next_question(db: Session, session_id: int) -> tuple[QuizSessionWord | N
         db.query(QuizSessionWord)
         .filter(
             QuizSessionWord.session_id == session_id,
-            QuizSessionWord.is_answered == False,
+            QuizSessionWord.is_answered.is_(False),
         )
         .order_by(QuizSessionWord.order)
         .first()
@@ -114,7 +114,7 @@ def get_next_question(db: Session, session_id: int) -> tuple[QuizSessionWord | N
         db.query(func.count(QuizSessionWord.id))
         .filter(
             QuizSessionWord.session_id == session_id,
-            QuizSessionWord.is_answered == True,
+            QuizSessionWord.is_answered.is_(True),
         )
         .scalar()
         or 0
@@ -142,7 +142,7 @@ def submit_answer(
         .filter(
             QuizSessionWord.session_id == session_id,
             QuizSessionWord.word_id == word_id,
-            QuizSessionWord.is_answered == False,
+            QuizSessionWord.is_answered.is_(False),
         )
         .first()
     )
@@ -156,7 +156,7 @@ def submit_answer(
         db.query(func.count(QuizSessionWord.id))
         .filter(
             QuizSessionWord.session_id == session_id,
-            QuizSessionWord.is_answered == False,
+            QuizSessionWord.is_answered.is_(False),
         )
         .scalar()
         or 0

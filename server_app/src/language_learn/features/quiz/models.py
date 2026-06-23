@@ -1,8 +1,9 @@
 # クイズ機能の SQLAlchemy モデル定義
-# QuizSession（セッション）・QuizSessionWord（出題単語）・QuizAnswer（回答）を定義する
+# QuizSession（セッション）・QuizSessionWord（出題単語）・QuizAnswer（回答）・
+# WordSimilarity（穴埋め3択の選択肢候補事前計算）・QuizSessionWordChoice（穴埋め3択の選択肢）を定義する
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from language_learn.core.base_model import Base
@@ -52,10 +53,22 @@ class QuizSessionWord(Base):
     order: Mapped[int] = mapped_column(Integer, nullable=False)
     # 回答済みかどうか
     is_answered: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # クイズの種類（"meaning": 意味確認テスト / "fill_blank": 例文穴埋め3択テスト）
+    quiz_type: Mapped[str] = mapped_column(String(20), nullable=False, default="meaning")
+    # 穴埋め対象の例文 ID（quiz_type == "fill_blank" の場合のみ使用）
+    example_sentence_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("example_sentences.id", ondelete="CASCADE"), nullable=True
+    )
 
     session: Mapped["QuizSession"] = relationship("QuizSession", back_populates="session_words")
     # 文字列参照で循環インポートを回避
     word: Mapped["Word"] = relationship("Word")  # type: ignore[name-defined]  # noqa: F821
+    # 穴埋め3択テストの選択肢（quiz_type == "fill_blank" の場合のみ使用）
+    choices: Mapped[list["QuizSessionWordChoice"]] = relationship(
+        "QuizSessionWordChoice",
+        back_populates="session_word",
+        cascade="all, delete-orphan",
+    )
 
 
 class QuizAnswer(Base):
@@ -78,5 +91,52 @@ class QuizAnswer(Base):
     answered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     session: Mapped["QuizSession"] = relationship("QuizSession", back_populates="answers")
+    # 文字列参照で循環インポートを回避
+    word: Mapped["Word"] = relationship("Word")  # type: ignore[name-defined]  # noqa: F821
+
+
+class WordSimilarity(Base):
+    """類似単語テーブル。穴埋め3択テストの誤答選択肢候補を事前計算して保持する。
+
+    同じ品詞の単語同士で類似度を計算し、word_id ごとに似ている順（rank 昇順）で
+    上位数件を保存する。出題時はここからランダムに誤答候補を抽出するため、
+    毎回類似度を再計算する必要がなく処理コストを抑えられる。
+    """
+
+    __tablename__ = "word_similarities"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    # 対象単語 ID
+    word_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("words.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # 似ている単語の ID（誤答選択肢候補）
+    similar_word_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("words.id", ondelete="CASCADE"), nullable=False
+    )
+    # 似ている順（小さいほど似ている）
+    rank: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class QuizSessionWordChoice(Base):
+    """穴埋め3択テストの選択肢テーブル。1問あたり3件（正解1件+誤答2件）を保持する。"""
+
+    __tablename__ = "quiz_session_word_choices"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    # 所属する出題単語（QuizSessionWord）
+    session_word_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("quiz_session_words.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # 選択肢の単語 ID
+    word_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("words.id", ondelete="CASCADE"), nullable=False
+    )
+    # 正解かどうか
+    is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    session_word: Mapped["QuizSessionWord"] = relationship(
+        "QuizSessionWord", back_populates="choices"
+    )
     # 文字列参照で循環インポートを回避
     word: Mapped["Word"] = relationship("Word")  # type: ignore[name-defined]  # noqa: F821

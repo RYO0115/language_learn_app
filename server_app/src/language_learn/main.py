@@ -15,7 +15,13 @@ from language_learn.features.ai.router import router as ai_router
 from language_learn.features.ai.router import set_templates as ai_set_templates
 from language_learn.features.export.router import router as export_router
 from language_learn.features.export.router import set_templates as export_set_templates
-from language_learn.features.quiz.models import QuizAnswer, QuizSession, QuizSessionWord  # noqa: F401
+from language_learn.features.quiz.models import (  # noqa: F401
+    QuizAnswer,
+    QuizSession,
+    QuizSessionWord,
+    QuizSessionWordChoice,
+    WordSimilarity,
+)
 from language_learn.features.quiz.router import router as quiz_router
 from language_learn.features.quiz.router import set_templates as quiz_set_templates
 from language_learn.features.settings.router import router as settings_router
@@ -71,6 +77,41 @@ def startup_event() -> None:
             conn.commit()
         except Exception:
             pass  # 既にカラムが存在する場合はスキップ
+
+    # quiz_session_words.quiz_type / example_sentence_id カラムの追加（既存 DB 向けマイグレーション）
+    with engine.connect() as conn:
+        try:
+            conn.execute(text(
+                "ALTER TABLE quiz_session_words ADD COLUMN quiz_type VARCHAR(20) NOT NULL DEFAULT 'meaning'"
+            ))
+            conn.commit()
+        except Exception:
+            pass  # 既にカラムが存在する場合はスキップ
+    with engine.connect() as conn:
+        try:
+            conn.execute(text(
+                "ALTER TABLE quiz_session_words ADD COLUMN example_sentence_id INTEGER"
+            ))
+            conn.commit()
+        except Exception:
+            pass  # 既にカラムが存在する場合はスキップ
+
+    # 旧フォーマットの DB（word_similarities が未投入）を新フォーマットに作り替える。
+    # 単語登録済みなのに類似単語候補が1件もない場合にのみ実行する。
+    from sqlalchemy.orm import Session as _Session
+
+    from language_learn.features.quiz.models import WordSimilarity as _WordSimilarity
+    from language_learn.features.quiz.similarity_service import recompute_all_similarities
+    from language_learn.features.words.models import Word as _Word
+
+    db = _Session(bind=engine)
+    try:
+        has_words = db.query(_Word.id).first() is not None
+        has_similarities = db.query(_WordSimilarity.id).first() is not None
+        if has_words and not has_similarities:
+            recompute_all_similarities(db)
+    finally:
+        db.close()
 
 
 @app.get("/", response_class=HTMLResponse)

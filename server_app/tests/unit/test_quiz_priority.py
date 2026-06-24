@@ -2,26 +2,11 @@
 # ブラウザ越しでは検証しづらい選択アルゴリズムを、独立した in-memory DB で直接検証する
 from datetime import datetime, timedelta, timezone
 
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
-from language_learn.core.base_model import Base
 from language_learn.features.quiz.models import QuizAnswer
 from language_learn.features.quiz.service import select_quiz_words
 from language_learn.features.words.models import Word
-
-
-@pytest.fixture
-def db():
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(bind=engine)
-    SessionLocal = sessionmaker(bind=engine)
-    session = SessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
 
 
 def _add_word(db: Session, word: str) -> Word:

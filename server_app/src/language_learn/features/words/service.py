@@ -50,6 +50,20 @@ def _to_response(db: Session, word: Word) -> WordResponse:
     return resp
 
 
+def _refresh_similarities_for_part_of_speech(db: Session, part_of_speech: str | None) -> None:
+    """指定した品詞グループの類似単語（穴埋め3択テストの選択肢候補）を再計算してコミットする。
+
+    遅延インポートで循環参照を回避する。
+    """
+    if not part_of_speech:
+        return
+    from language_learn.features.quiz.similarity_service import (
+        recompute_similarities_for_part_of_speech,
+    )
+    recompute_similarities_for_part_of_speech(db, part_of_speech)
+    db.commit()
+
+
 def create_word(db: Session, data: WordCreate) -> Word:
     """単語を新規登録する。大文字小文字を区別せず重複チェックを行う。"""
     # 重複チェック（case-insensitive）
@@ -97,6 +111,10 @@ def create_word(db: Session, data: WordCreate) -> Word:
 
     db.commit()
     db.refresh(word)
+
+    # 穴埋め3択テスト用の類似単語候補を更新（同じ品詞グループ内で再計算）
+    _refresh_similarities_for_part_of_speech(db, word.part_of_speech)
+
     return word
 
 
@@ -189,6 +207,7 @@ def list_words(
 def update_word(db: Session, word_id: int, data: WordUpdate) -> Word:
     """単語情報を更新する。例文は全て置き換え（delete + insert）を行う。"""
     word = get_word(db, word_id)
+    old_part_of_speech = word.part_of_speech
 
     if data.reading is not None:
         word.reading = data.reading
@@ -228,14 +247,33 @@ def update_word(db: Session, word_id: int, data: WordUpdate) -> Word:
     word.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(word)
+
+    # 穴埋め3択テスト用の類似単語候補を更新（品詞が変わった場合は旧・新両方のグループを再計算）
+    _refresh_similarities_for_part_of_speech(db, old_part_of_speech)
+    if word.part_of_speech != old_part_of_speech:
+        _refresh_similarities_for_part_of_speech(db, word.part_of_speech)
+
     return word
 
 
 def delete_word(db: Session, word_id: int) -> None:
     """単語を削除する。関連する例文・出典情報・クイズ回答は CASCADE で自動削除される。"""
+    from language_learn.features.quiz.models import WordSimilarity
+
     word = get_word(db, word_id)
+    part_of_speech = word.part_of_speech
+
+    # FK の ON DELETE CASCADE は SQLite で強制有効化していないため、
+    # 類似単語候補は明示的に削除してから単語本体を削除する
+    db.query(WordSimilarity).filter(
+        (WordSimilarity.word_id == word_id) | (WordSimilarity.similar_word_id == word_id)
+    ).delete(synchronize_session=False)
+
     db.delete(word)
     db.commit()
+
+    # 残った同品詞グループの類似単語候補を再計算
+    _refresh_similarities_for_part_of_speech(db, part_of_speech)
 
 
 def get_source_suggestions(db: Session) -> dict[str, list[str]]:
@@ -269,11 +307,25 @@ def bulk_delete_words(db: Session, word_ids: list[int]) -> int:
     Returns:
         実際に削除した件数
     """
+    from language_learn.features.quiz.models import WordSimilarity
+
     words = db.query(Word).filter(Word.id.in_(word_ids)).all()
     count = len(words)
+    affected_parts_of_speech = {w.part_of_speech for w in words if w.part_of_speech}
+    deleted_ids = [w.id for w in words]
+
+    if deleted_ids:
+        db.query(WordSimilarity).filter(
+            WordSimilarity.word_id.in_(deleted_ids) | WordSimilarity.similar_word_id.in_(deleted_ids)
+        ).delete(synchronize_session=False)
+
     for word in words:
         db.delete(word)
     db.commit()
+
+    for pos in affected_parts_of_speech:
+        _refresh_similarities_for_part_of_speech(db, pos)
+
     return count
 
 

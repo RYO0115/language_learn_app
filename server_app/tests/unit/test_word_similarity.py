@@ -90,6 +90,43 @@ def test_delete_word_cleans_up_and_refreshes_remaining_group(db: Session):
     assert {r.similar_word_id for r in a_rows} == {c}
 
 
+def test_meaning_overlap_demotes_similarity_rank(db: Session):
+    """綴りが似ていても意味がほぼ同じ（類義語）候補は、綴りが似ていて意味も異なる候補より低い順位になる。"""
+    w = create_word(db, WordCreate(
+        word="stark",
+        meaning="厳しい、過酷な様子を表す形容詞",
+        part_of_speech="形容詞",
+        example_sentences=[
+            ExampleSentenceCreate(sentence_en="This is stark.", sentence_ja="example", order=1)
+        ],
+    ))
+    synonym = create_word(db, WordCreate(
+        word="starz",
+        meaning="厳しい、過酷な様子を表す形容詞",
+        part_of_speech="形容詞",
+        example_sentences=[
+            ExampleSentenceCreate(sentence_en="This is starz.", sentence_ja="example", order=1)
+        ],
+    ))
+    different_meaning = create_word(db, WordCreate(
+        word="start",
+        meaning="物事を開始すること",
+        part_of_speech="形容詞",
+        example_sentences=[
+            ExampleSentenceCreate(sentence_en="This is start.", sentence_ja="example", order=1)
+        ],
+    ))
+
+    rows = (
+        db.query(WordSimilarity)
+        .filter(WordSimilarity.word_id == w.id)
+        .order_by(WordSimilarity.rank)
+        .all()
+    )
+    ranks = {r.similar_word_id: r.rank for r in rows}
+    assert ranks[different_meaning.id] < ranks[synonym.id]
+
+
 def test_recompute_is_idempotent_delete_then_insert(db: Session):
     _create(db, "apple")
     _create(db, "apricot")

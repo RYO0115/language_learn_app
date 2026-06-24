@@ -9,6 +9,12 @@ from language_learn.features.words.models import Word
 # 1単語あたり事前計算しておく類似単語の上限件数
 SIMILARITY_TOP_N = 5
 
+# 意味の重複度（文字バイグラムの Jaccard 類似度）に乗じるペナルティの重み。
+# 類義語（例: 同じ「果物」を意味する単語同士）は綴りが似ていても誤答選択肢として
+# 不適切（例文中でどちらを入れても意味が通ってしまい、正誤の判断材料にならない）
+# になりやすいため、意味が酷似する候補ほどスコアを大きく下げる。
+_MEANING_OVERLAP_PENALTY_WEIGHT = 10.0
+
 
 def _common_prefix_length(a: str, b: str) -> int:
     """2つの文字列の共通プレフィックスの長さを返す（大文字小文字を区別しない）。"""
@@ -21,16 +27,33 @@ def _common_prefix_length(a: str, b: str) -> int:
     return length
 
 
-def _similarity_score(word_a: str, word_b: str) -> float:
+def _char_bigrams(text: str) -> set[str]:
+    """文字列の文字バイグラム集合を返す（日本語はスペース区切りがないための簡易な類似度計算用）。"""
+    if len(text) < 2:
+        return {text} if text else set()
+    return {text[i : i + 2] for i in range(len(text) - 1)}
+
+
+def _meaning_overlap(meaning_a: str, meaning_b: str) -> float:
+    """2つの意味説明文の重複度を文字バイグラムの Jaccard 類似度で返す（0.0〜1.0）。"""
+    bigrams_a, bigrams_b = _char_bigrams(meaning_a), _char_bigrams(meaning_b)
+    if not bigrams_a or not bigrams_b:
+        return 0.0
+    return len(bigrams_a & bigrams_b) / len(bigrams_a | bigrams_b)
+
+
+def _similarity_score(word_a: str, word_b: str, meaning_a: str = "", meaning_b: str = "") -> float:
     """2つの単語の類似度スコアを返す（値が大きいほど似ている）。
 
     先頭文字列の共通プレフィックス長を主要因とし、単語長の差が小さいほど
     わずかにスコアを加点する（同程度の長さの単語ほど見分けがつきにくく、
-    より良い誤答選択肢になるため）。
+    より良い誤答選択肢になるため）。一方で意味が酷似する候補（類義語）は
+    誤答選択肢として不適切になりやすいため、意味の重複度に応じてスコアを減点する。
     """
     prefix_len = _common_prefix_length(word_a, word_b)
     length_diff = abs(len(word_a) - len(word_b))
-    return prefix_len - length_diff * 0.1
+    meaning_overlap = _meaning_overlap(meaning_a, meaning_b)
+    return prefix_len - length_diff * 0.1 - meaning_overlap * _MEANING_OVERLAP_PENALTY_WEIGHT
 
 
 def recompute_similarities_for_part_of_speech(db: Session, part_of_speech: str) -> None:
@@ -57,7 +80,10 @@ def recompute_similarities_for_part_of_speech(db: Session, part_of_speech: str) 
 
     for target in words:
         scored = [
-            (other.id, _similarity_score(target.word, other.word))
+            (
+                other.id,
+                _similarity_score(target.word, other.word, target.meaning, other.meaning),
+            )
             for other in words
             if other.id != target.id
         ]

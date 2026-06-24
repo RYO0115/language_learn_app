@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from language_learn.features.quiz.models import QuizSessionWordChoice
 from language_learn.features.quiz.service import (
+    _blank_word_in_sentence,
     get_fill_blank_eligible_word_ids,
     is_fill_blank_unlocked,
     start_quiz,
@@ -95,6 +96,27 @@ def test_start_quiz_fill_blank_creates_three_choices_with_one_correct(db: Sessio
         correct_choices = [c for c in choices if c.is_correct]
         assert len(correct_choices) == 1
         assert correct_choices[0].word_id == sw.word_id
+
+
+def test_blank_word_in_sentence_matches_base_form():
+    assert _blank_word_in_sentence("I have an apple.", "apple") == "I have an _____."
+
+
+def test_blank_word_in_sentence_matches_regular_past_tense():
+    assert _blank_word_in_sentence("She wanted to go home.", "want") == "She _____ to go home."
+
+
+def test_blank_word_in_sentence_matches_irregular_past_tense():
+    assert _blank_word_in_sentence("He went to school yesterday.", "go") == "He _____ to school yesterday."
+
+
+def test_blank_word_in_sentence_matches_plural_noun():
+    assert _blank_word_in_sentence("I have two apples.", "apple") == "I have two _____."
+
+
+def test_blank_word_in_sentence_no_match_leaves_sentence_unchanged():
+    sentence = "This sentence has no matching word."
+    assert _blank_word_in_sentence(sentence, "banana") == sentence
 
 
 def test_start_quiz_fill_blank_raises_when_not_unlocked(db: Session):

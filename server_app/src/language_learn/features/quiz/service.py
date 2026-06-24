@@ -4,6 +4,7 @@ import random
 import re
 from datetime import datetime, timezone
 
+from lemminflect import getAllInflections, getAllInflectionsOOV
 from sqlalchemy import Integer, func
 from sqlalchemy.orm import Session
 
@@ -318,100 +319,43 @@ def submit_answer(
     return is_completed
 
 
-# 主要な不規則動詞の活用形テーブル（原形 -> 活用形の集合）。
-# 規則変化の生成では対応できない過去形・過去分詞などをここで補う。
-_IRREGULAR_VERB_FORMS: dict[str, set[str]] = {
-    "be": {"am", "is", "are", "was", "were", "been", "being"},
-    "have": {"has", "had", "having"},
-    "do": {"does", "did", "done", "doing"},
-    "go": {"goes", "went", "gone", "going"},
-    "get": {"gets", "got", "gotten", "getting"},
-    "make": {"makes", "made", "making"},
-    "take": {"takes", "took", "taken", "taking"},
-    "see": {"sees", "saw", "seen", "seeing"},
-    "come": {"comes", "came", "coming"},
-    "know": {"knows", "knew", "known", "knowing"},
-    "give": {"gives", "gave", "given", "giving"},
-    "find": {"finds", "found", "finding"},
-    "think": {"thinks", "thought", "thinking"},
-    "say": {"says", "said", "saying"},
-    "tell": {"tells", "told", "telling"},
-    "become": {"becomes", "became", "becoming"},
-    "leave": {"leaves", "left", "leaving"},
-    "feel": {"feels", "felt", "feeling"},
-    "bring": {"brings", "brought", "bringing"},
-    "begin": {"begins", "began", "begun", "beginning"},
-    "keep": {"keeps", "kept", "keeping"},
-    "hold": {"holds", "held", "holding"},
-    "write": {"writes", "wrote", "written", "writing"},
-    "stand": {"stands", "stood", "standing"},
-    "hear": {"hears", "heard", "hearing"},
-    "mean": {"means", "meant", "meaning"},
-    "meet": {"meets", "met", "meeting"},
-    "run": {"runs", "ran", "running"},
-    "pay": {"pays", "paid", "paying"},
-    "sit": {"sits", "sat", "sitting"},
-    "speak": {"speaks", "spoke", "spoken", "speaking"},
-    "lead": {"leads", "led", "leading"},
-    "grow": {"grows", "grew", "grown", "growing"},
-    "lose": {"loses", "lost", "losing"},
-    "fall": {"falls", "fell", "fallen", "falling"},
-    "send": {"sends", "sent", "sending"},
-    "build": {"builds", "built", "building"},
-    "understand": {"understands", "understood", "understanding"},
-    "draw": {"draws", "drew", "drawn", "drawing"},
-    "break": {"breaks", "broke", "broken", "breaking"},
-    "spend": {"spends", "spent", "spending"},
-    "cut": {"cuts", "cutting"},
-    "rise": {"rises", "rose", "risen", "rising"},
-    "drive": {"drives", "drove", "driven", "driving"},
-    "buy": {"buys", "bought", "buying"},
-    "wear": {"wears", "wore", "worn", "wearing"},
-    "choose": {"chooses", "chose", "chosen", "choosing"},
-    "eat": {"eats", "ate", "eaten", "eating"},
-    "fly": {"flies", "flew", "flown", "flying"},
-    "win": {"wins", "won", "winning"},
-    "teach": {"teaches", "taught", "teaching"},
-    "sell": {"sells", "sold", "selling"},
-    "catch": {"catches", "caught", "catching"},
+# Word.part_of_speech（日本語ラベル）と lemminflect の universal POS タグの対応表。
+# 未登録の品詞ラベル・None の場合は全品詞を横断的に検索するフォールバックとなる。
+_PART_OF_SPEECH_TO_UPOS: dict[str, str] = {
+    "動詞": "VERB",
+    "名詞": "NOUN",
+    "形容詞": "ADJ",
+    "副詞": "ADV",
 }
 
 
-def _regular_inflections(word_text: str) -> set[str]:
-    """規則変化の活用形候補を生成する（複数形・三単現・過去形・進行形など）。
+def _inflected_forms(word_text: str, part_of_speech: str | None) -> set[str]:
+    """単語の活用形候補を返す（複数形・三単現・過去形・進行形・比較変化など）。
 
+    lemminflect の辞書（不規則変化を含む）を優先的に使用し、辞書に存在しない
+    語（造語・専門用語等）に対してはルールベースの推定（OOV 用 API）で補う。
     生成しすぎても実際の例文中に存在しなければマッチしないため、
     過剰生成は害にならない（網羅性を優先する）。
     """
-    w = word_text.lower()
-    forms = {w + "s", w + "es"}
+    upos = _PART_OF_SPEECH_TO_UPOS.get(part_of_speech or "")
+    inflections = getAllInflections(word_text, upos=upos)
+    forms = {form for tup in inflections.values() for form in tup}
 
-    if len(w) > 1 and w[-1] == "y" and w[-2] not in "aeiou":
-        forms.add(w[:-1] + "ies")
-        forms.add(w[:-1] + "ied")
+    if not forms:
+        forms = {form for tup in getAllInflectionsOOV(word_text, upos or "VERB").values() for form in tup}
 
-    if w.endswith("e"):
-        forms.add(w + "d")
-        forms.add(w[:-1] + "ing")
-    else:
-        forms.add(w + "ed")
-        forms.add(w + "ing")
-        # 短い単語の語末重子音化（例: stop -> stopped / stopping）
-        if len(w) >= 3 and w[-1] not in "aeiouwxy" and w[-2] in "aeiou" and w[-3] not in "aeiou":
-            forms.add(w + w[-1] + "ed")
-            forms.add(w + w[-1] + "ing")
-
+    forms.add(word_text)
     return forms
 
 
-def _blank_word_in_sentence(sentence_en: str, word_text: str) -> str:
+def _blank_word_in_sentence(sentence_en: str, word_text: str, part_of_speech: str | None = None) -> str:
     """例文中の対象単語を "_____" に置き換える（単語境界・大文字小文字を無視して1箇所のみ）。
 
-    原形に加えて、不規則動詞テーブルおよび規則変化から生成した活用形候補も
+    原形に加えて、活用形候補（lemminflect による辞書ベース・規則ベースの活用形生成）も
     マッチ対象とする。複数の形が候補に挙がる場合、例文中で最長一致する形を優先する
     （例: "watch" の候補に "watches" と "watch" がある場合、"watches" を優先的に探す）。
     """
-    candidates = {word_text} | _IRREGULAR_VERB_FORMS.get(word_text.lower(), set()) | _regular_inflections(word_text)
+    candidates = _inflected_forms(word_text, part_of_speech)
     ordered = sorted(candidates, key=len, reverse=True)
     pattern = re.compile(
         r"\b(?:" + "|".join(re.escape(c) for c in ordered) + r")\b", re.IGNORECASE
@@ -428,7 +372,11 @@ def get_fill_blank_question_data(db: Session, session_word: QuizSessionWord) -> 
         .filter(ExampleSentence.id == session_word.example_sentence_id)
         .first()
     )
-    sentence_en_blanked = _blank_word_in_sentence(sentence.sentence_en, word.word) if sentence and word else ""
+    sentence_en_blanked = (
+        _blank_word_in_sentence(sentence.sentence_en, word.word, word.part_of_speech)
+        if sentence and word
+        else ""
+    )
 
     choice_rows = (
         db.query(QuizSessionWordChoice)

@@ -119,6 +119,16 @@ def test_blank_word_in_sentence_no_match_leaves_sentence_unchanged():
     assert _blank_word_in_sentence(sentence, "banana") == sentence
 
 
+def test_blank_word_in_sentence_matches_irregular_plural_noun():
+    """不規則名詞の複数形（child -> children）も活用形辞書ベースの推定で検出できる。"""
+    assert _blank_word_in_sentence("I saw two children.", "child", "名詞") == "I saw two _____."
+
+
+def test_blank_word_in_sentence_matches_irregular_comparative_adjective():
+    """不規則形容詞の比較変化（good -> better）も活用形辞書ベースの推定で検出できる。"""
+    assert _blank_word_in_sentence("This is better than that.", "good", "形容詞") == "This is _____ than that."
+
+
 def test_start_quiz_fill_blank_raises_when_not_unlocked(db: Session):
     import pytest
 

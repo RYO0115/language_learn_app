@@ -367,3 +367,70 @@ def bulk_delete_words(db: Session, word_ids: list[int]) -> int:
 def get_word_count(db: Session) -> int:
     """登録単語の総数を返す。"""
     return db.query(func.count(Word.id)).scalar() or 0
+
+
+def normalize_existing_words(db: Session) -> int:
+    """既存の全単語テキストを正規化し、正規化によって重複が生じた場合はマージする。
+
+    過去のバグでゼロ幅文字・余分な空白が付いたまま登録された単語を、現在の正規化ルール
+    （`normalize_word_text`）に揃えるためのデータマイグレーション。
+
+    - 正規化しても他の単語と衝突しない場合: その場でテキストを書き換える。
+    - 正規化の結果、既存の単語（大文字小文字を無視して同一）と重複する場合:
+      先に登録された方を正準（canonical）として残し、重複側のクイズ回答・出題履歴を
+      正準側へ付け替えてから重複行を削除する（学習記録を失わないため）。
+
+    Returns:
+        テキストを書き換えた、またはマージで削除した単語の件数。
+    """
+    from language_learn.features.quiz.models import (
+        QuizAnswer,
+        QuizSessionWord,
+        QuizSessionWordChoice,
+        WordSimilarity,
+    )
+
+    # 先に登録された単語を canonical にするため登録順で処理する
+    words = db.query(Word).order_by(Word.created_at.asc(), Word.id.asc()).all()
+    canonical_by_key: dict[str, Word] = {}
+    affected_parts_of_speech: set[str] = set()
+    changed = 0
+
+    for word in words:
+        normalized = normalize_word_text(word.word)
+        # 正規化すると空になる異常データ（不可視文字のみ等）は触らずに残す
+        if not normalized:
+            continue
+        key = normalized.lower()
+        canonical = canonical_by_key.get(key)
+
+        if canonical is None:
+            canonical_by_key[key] = word
+            if word.word != normalized:
+                word.word = normalized
+                changed += 1
+                if word.part_of_speech:
+                    affected_parts_of_speech.add(word.part_of_speech)
+            continue
+
+        # 正規化後に canonical と重複 → canonical へマージして重複行を削除
+        for model in (QuizAnswer, QuizSessionWord, QuizSessionWordChoice):
+            db.query(model).filter(model.word_id == word.id).update(
+                {model.word_id: canonical.id}, synchronize_session=False
+            )
+        db.query(WordSimilarity).filter(
+            (WordSimilarity.word_id == word.id) | (WordSimilarity.similar_word_id == word.id)
+        ).delete(synchronize_session=False)
+        for pos in (word.part_of_speech, canonical.part_of_speech):
+            if pos:
+                affected_parts_of_speech.add(pos)
+        db.delete(word)  # 例文・出典は ORM カスケードで削除される
+        changed += 1
+
+    if changed:
+        db.commit()
+        # マージ・テキスト変更で影響を受けた品詞グループの類似単語候補を再計算
+        for pos in affected_parts_of_speech:
+            _refresh_similarities_for_part_of_speech(db, pos)
+
+    return changed

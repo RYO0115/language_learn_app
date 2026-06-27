@@ -113,6 +113,11 @@ def startup_event() -> None:
     finally:
         db.close()
 
+    # データマイグレーション（バージョン連動）: アプリのバージョンが上がったときだけ、
+    # 既存データを最新の正規化ルールへ揃え直して DB の形式を最新に保つ。
+    from language_learn.core.migrations import run_data_migrations
+    run_data_migrations(engine, _pkg_version("language-learn-app"))
+
 
 @app.get("/", response_class=HTMLResponse)
 def dashboard(request: Request):

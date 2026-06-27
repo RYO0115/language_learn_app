@@ -21,6 +21,7 @@ from language_learn.features.words.service import (
     get_source_suggestions,
     get_word,
     list_words,
+    normalize_word_text,
     update_word,
 )
 
@@ -46,10 +47,12 @@ def word_list_page(
     """単語一覧ページを返す。ソート・検索クエリパラメータに対応。
     検索語が入力されて結果が0件の場合は新規追加画面へリダイレクトする。
     """
+    # 検索語を正規化（末尾の空白・ゼロ幅文字で検索ミス／意図しないリダイレクトが起きるのを防ぐ）
+    search = normalize_word_text(search)
     words = list_words(db, sort_by=sort_by, search=search)
-    if search.strip() and not words:
+    if search and not words:
         from urllib.parse import quote
-        return RedirectResponse(url=f"/words/add?word={quote(search.strip())}", status_code=303)
+        return RedirectResponse(url=f"/words/add?word={quote(search)}", status_code=303)
     return templates.TemplateResponse(
         request,
         "words/list.html",
@@ -79,7 +82,7 @@ async def word_create(request: Request, db: Session = Depends(get_db)):
       source_type, source_title, source_url, source_page, source_detail
     """
     form = await request.form()
-    word_text = str(form.get("word", "")).strip()
+    word_text = normalize_word_text(str(form.get("word", "")))
     reading = str(form.get("reading", "")).strip()
 
     # 品詞ごとの意味・例文を収集（最大 8 品詞まで対応）

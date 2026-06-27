@@ -1,5 +1,6 @@
 # 単語帳機能のビジネスロジック層
 # 単語の CRUD 操作・正答率計算などを提供する
+import re
 from datetime import datetime, timezone
 
 from sqlalchemy import func
@@ -14,6 +15,33 @@ from language_learn.features.words.schemas import (
     WordResponse,
     WordUpdate,
 )
+
+# iPhone のキーボード（予測変換・音声入力など）が単語の末尾に挿入することがある
+# ゼロ幅・不可視文字。str.strip() では除去されないため、これらが付くと「見た目が同じ単語」が
+# 別単語として扱われ、重複登録の見逃しや検索ミスの原因になる。正規化時に明示的に取り除く。
+# （ユーザーの語彙内容ではなく Unicode の制御・書式文字＝技術的に閉じた集合なので固定リストでよい）
+_INVISIBLE_CHARS = (
+    "\u200b"  # ZERO WIDTH SPACE
+    "\u200c"  # ZERO WIDTH NON-JOINER
+    "\u200d"  # ZERO WIDTH JOINER
+    "\u2060"  # WORD JOINER
+    "\ufeff"  # ZERO WIDTH NO-BREAK SPACE (BOM)
+    "\u00ad"  # SOFT HYPHEN
+)
+_INVISIBLE_TRANSLATION = dict.fromkeys(map(ord, _INVISIBLE_CHARS), None)
+
+
+def normalize_word_text(text: str) -> str:
+    """単語テキストを正規化する。
+
+    末尾のゼロ幅・不可視文字や通常の空白（半角・全角・改行・NBSP など）を取り除き、
+    内部の連続空白は 1 つに畳み込む。これにより「見た目が同じ単語」が空白の有無で
+    別単語として扱われ、重複登録の見逃しや検索ミスが起きるのを防ぐ。
+    """
+    if not text:
+        return ""
+    text = text.translate(_INVISIBLE_TRANSLATION)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def _attach_accuracy(db: Session, word_id: int) -> tuple[float | None, int]:
@@ -66,18 +94,20 @@ def _refresh_similarities_for_part_of_speech(db: Session, part_of_speech: str | 
 
 def create_word(db: Session, data: WordCreate) -> Word:
     """単語を新規登録する。大文字小文字を区別せず重複チェックを行う。"""
+    # 単語テキストを正規化（末尾のゼロ幅文字・空白の有無で別単語扱いになるのを防ぐ）
+    word_text = normalize_word_text(data.word)
     # 重複チェック（case-insensitive）
     existing = (
-        db.query(Word).filter(func.lower(Word.word) == data.word.lower().strip()).first()
+        db.query(Word).filter(func.lower(Word.word) == word_text.lower()).first()
     )
     if existing:
-        raise DuplicateWordError(f"単語「{data.word}」はすでに登録されています。")
+        raise DuplicateWordError(f"単語「{word_text}」はすでに登録されています。")
 
     now = datetime.now(timezone.utc)
 
     # 単語本体を作成
     word = Word(
-        word=data.word.strip(),
+        word=word_text,
         reading=data.reading,
         meaning=data.meaning,
         part_of_speech=data.part_of_speech,
@@ -127,10 +157,13 @@ def get_word(db: Session, word_id: int) -> Word:
 
 
 def get_word_by_text(db: Session, word_text: str) -> Word | None:
-    """英単語テキストで単語を取得する（大文字小文字を区別しない）。"""
+    """英単語テキストで単語を取得する（大文字小文字を区別せず、空白・ゼロ幅文字を正規化）。"""
+    normalized = normalize_word_text(word_text)
+    if not normalized:
+        return None
     return (
         db.query(Word)
-        .filter(func.lower(Word.word) == word_text.lower().strip())
+        .filter(func.lower(Word.word) == normalized.lower())
         .first()
     )
 
@@ -161,6 +194,8 @@ def list_words(
     query = db.query(Word).outerjoin(accuracy_subq, Word.id == accuracy_subq.c.word_id)
 
     # 検索フィルタ（単語・意味に対して部分一致）
+    # 検索語も正規化し、iPhone 等が末尾に付与する空白・ゼロ幅文字で 0 件になるのを防ぐ
+    search = normalize_word_text(search)
     if search:
         query = query.filter(
             Word.word.ilike(f"%{search}%") | Word.meaning.ilike(f"%{search}%")
@@ -332,3 +367,70 @@ def bulk_delete_words(db: Session, word_ids: list[int]) -> int:
 def get_word_count(db: Session) -> int:
     """登録単語の総数を返す。"""
     return db.query(func.count(Word.id)).scalar() or 0
+
+
+def normalize_existing_words(db: Session) -> int:
+    """既存の全単語テキストを正規化し、正規化によって重複が生じた場合はマージする。
+
+    過去のバグでゼロ幅文字・余分な空白が付いたまま登録された単語を、現在の正規化ルール
+    （`normalize_word_text`）に揃えるためのデータマイグレーション。
+
+    - 正規化しても他の単語と衝突しない場合: その場でテキストを書き換える。
+    - 正規化の結果、既存の単語（大文字小文字を無視して同一）と重複する場合:
+      先に登録された方を正準（canonical）として残し、重複側のクイズ回答・出題履歴を
+      正準側へ付け替えてから重複行を削除する（学習記録を失わないため）。
+
+    Returns:
+        テキストを書き換えた、またはマージで削除した単語の件数。
+    """
+    from language_learn.features.quiz.models import (
+        QuizAnswer,
+        QuizSessionWord,
+        QuizSessionWordChoice,
+        WordSimilarity,
+    )
+
+    # 先に登録された単語を canonical にするため登録順で処理する
+    words = db.query(Word).order_by(Word.created_at.asc(), Word.id.asc()).all()
+    canonical_by_key: dict[str, Word] = {}
+    affected_parts_of_speech: set[str] = set()
+    changed = 0
+
+    for word in words:
+        normalized = normalize_word_text(word.word)
+        # 正規化すると空になる異常データ（不可視文字のみ等）は触らずに残す
+        if not normalized:
+            continue
+        key = normalized.lower()
+        canonical = canonical_by_key.get(key)
+
+        if canonical is None:
+            canonical_by_key[key] = word
+            if word.word != normalized:
+                word.word = normalized
+                changed += 1
+                if word.part_of_speech:
+                    affected_parts_of_speech.add(word.part_of_speech)
+            continue
+
+        # 正規化後に canonical と重複 → canonical へマージして重複行を削除
+        for model in (QuizAnswer, QuizSessionWord, QuizSessionWordChoice):
+            db.query(model).filter(model.word_id == word.id).update(
+                {model.word_id: canonical.id}, synchronize_session=False
+            )
+        db.query(WordSimilarity).filter(
+            (WordSimilarity.word_id == word.id) | (WordSimilarity.similar_word_id == word.id)
+        ).delete(synchronize_session=False)
+        for pos in (word.part_of_speech, canonical.part_of_speech):
+            if pos:
+                affected_parts_of_speech.add(pos)
+        db.delete(word)  # 例文・出典は ORM カスケードで削除される
+        changed += 1
+
+    if changed:
+        db.commit()
+        # マージ・テキスト変更で影響を受けた品詞グループの類似単語候補を再計算
+        for pos in affected_parts_of_speech:
+            _refresh_similarities_for_part_of_speech(db, pos)
+
+    return changed

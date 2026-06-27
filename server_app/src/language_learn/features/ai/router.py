@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from language_learn.core.database import get_db
 from language_learn.core.exceptions import AIRateLimitError, AIServiceError
 from language_learn.features.ai.service import generate_word_info
-from language_learn.features.words.service import get_word_by_text
+from language_learn.features.words.service import get_word_by_text, normalize_word_text
 
 _spell = SpellChecker()
 
@@ -62,7 +62,7 @@ def spell_check(request: Request, word: str = Form(...), db: Session = Depends(g
     登録済み単語の場合は重複メッセージを返す。
     辞書に存在するか候補がない場合は空レスポンスを返す。
     """
-    word = word.strip()
+    word = normalize_word_text(word)
     if not word:
         return HTMLResponse("")
     existing = get_word_by_text(db, word)

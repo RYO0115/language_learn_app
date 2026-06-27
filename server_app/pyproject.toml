@@ -1,7 +1,7 @@
 # 言語学習単語帳アプリ プロジェクト設定
 [project]
 name = "language-learn-app"
-version = "0.4.1"
+version = "0.4.4"
 description = "外国語学習単語帳アプリ（日本語話者向け英語学習）"
 requires-python = ">=3.12"
 dependencies = [
@@ -15,6 +15,7 @@ dependencies = [
     "pydantic-settings>=2.6.0",
     "aiofiles>=24.1.0",
     "pyspellchecker>=0.9.0",
+    "lemminflect>=0.2.3",
 ]
 
 [dependency-groups]
@@ -35,7 +36,7 @@ select = ["E", "F", "W", "I"]
 ignore = ["E501"]
 
 [tool.bumpversion]
-current_version = "0.4.1"
+current_version = "0.4.4"
 commit = true
 tag = false
 tag_name = "v{new_version}"

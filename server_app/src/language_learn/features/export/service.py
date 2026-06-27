@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from language_learn.core.exceptions import ExportImportError
 from language_learn.features.export.schemas import ImportResult
 from language_learn.features.words.models import ExampleSentence, Word, WordSource
-from language_learn.features.words.service import get_word_by_text
+from language_learn.features.words.service import get_word_by_text, normalize_word_text
 
 # ---- JSON エクスポート ----
 
@@ -63,7 +63,7 @@ def import_json(db: Session, data: dict | list) -> ImportResult:
     now = datetime.now(timezone.utc)
 
     for item in words_data:
-        word_text = item.get("word", "").strip()
+        word_text = normalize_word_text(item.get("word", ""))
         if not word_text:
             result.error_count += 1
             result.errors.append("空の単語エントリをスキップしました。")
@@ -174,7 +174,7 @@ def import_csv(db: Session, csv_content: str) -> ImportResult:
         raise ExportImportError(f"CSV の解析に失敗しました: {e}") from e
 
     for row in reader:
-        word_text = row.get("word", "").strip()
+        word_text = normalize_word_text(row.get("word", ""))
         if not word_text:
             continue
 

@@ -4,12 +4,12 @@
 import pytest
 from google.genai import errors as genai_errors
 
+from language_learn.config import settings
 from language_learn.core.exceptions import (
     AIRateLimitError,
     AIServiceError,
     AIServiceUnavailableError,
 )
-from language_learn.config import settings
 from language_learn.features.ai.providers.gemini import GeminiProvider
 
 

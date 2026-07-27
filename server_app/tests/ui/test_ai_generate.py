@@ -59,5 +59,5 @@ def test_ai_generate_rate_limit_shows_retry_message(page: Page, rate_limited_ser
     page.click("#ai-generate-btn")
 
     error_box = page.locator("#ai-fields")
-    expect(error_box).to_contain_text("AI のレート制限中です")
+    expect(error_box).to_contain_text("AI が一時的に利用できません")
     expect(error_box).to_contain_text("秒後に再試行してください")

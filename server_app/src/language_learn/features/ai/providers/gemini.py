@@ -7,7 +7,11 @@ from google.genai import errors as genai_errors
 from google.genai import types
 
 from language_learn.config import settings
-from language_learn.core.exceptions import AIRateLimitError, AIServiceError
+from language_learn.core.exceptions import (
+    AIRateLimitError,
+    AIServiceError,
+    AIServiceUnavailableError,
+)
 from language_learn.features.ai.providers.base import BaseAIProvider
 from language_learn.features.ai.schemas import AIGenerateResponse
 
@@ -68,6 +72,12 @@ class GeminiProvider(BaseAIProvider):
             if e.code == 429:
                 raise AIRateLimitError(
                     "Gemini API のクォータ（利用上限）を超えました。"
+                    "しばらく時間をおいてから再試行してください。",
+                    retry_after_seconds=_extract_retry_delay(e),
+                ) from e
+            if e.code == 503:
+                raise AIServiceUnavailableError(
+                    "Gemini API が一時的に混雑しており利用できません（overloaded）。"
                     "しばらく時間をおいてから再試行してください。",
                     retry_after_seconds=_extract_retry_delay(e),
                 ) from e

@@ -7,7 +7,11 @@ from spellchecker import SpellChecker
 from sqlalchemy.orm import Session
 
 from language_learn.core.database import get_db
-from language_learn.core.exceptions import AIRateLimitError, AIServiceError
+from language_learn.core.exceptions import (
+    AIRateLimitError,
+    AIServiceError,
+    AIServiceUnavailableError,
+)
 from language_learn.features.ai.service import generate_word_info
 from language_learn.features.words.service import get_word_by_text, normalize_word_text
 
@@ -39,6 +43,13 @@ def ai_generate(request: Request, word: str = Form(...)):
             "words/partials/ai_error.html",
             {"error": str(e), "retry_after_seconds": e.retry_after_seconds},
             status_code=429,
+        )
+    except AIServiceUnavailableError as e:
+        return templates.TemplateResponse(
+            request,
+            "words/partials/ai_error.html",
+            {"error": str(e), "retry_after_seconds": e.retry_after_seconds},
+            status_code=503,
         )
     except AIServiceError as e:
         return templates.TemplateResponse(

@@ -35,6 +35,18 @@ class AIRateLimitError(AIServiceError):
         self.retry_after_seconds = retry_after_seconds
 
 
+class AIServiceUnavailableError(AIServiceError):
+    """AI サービスが一時的に利用不可（HTTP 503 / overloaded）な場合に送出する例外。
+
+    モデルの過負荷など一時的な理由で失敗しているため、
+    レート制限と同様にしばらく待って再試行すれば回復が期待できる。
+    """
+
+    def __init__(self, message: str, retry_after_seconds: float | None = None):
+        super().__init__(message)
+        self.retry_after_seconds = retry_after_seconds
+
+
 class ExportImportError(AppError):
     """エクスポート/インポート処理でエラーが発生した場合に送出する例外。"""
     pass

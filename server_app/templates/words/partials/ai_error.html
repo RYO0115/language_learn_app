@@ -1,7 +1,7 @@
 <!-- AI 生成エラー表示パーシャル -->
 <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
   <p class="font-semibold">
-    {% if retry_after_seconds is defined %}⏳ AI のレート制限中です{% else %}⚠️ AI 生成に失敗しました{% endif %}
+    {% if retry_after_seconds is defined %}⏳ AI が一時的に利用できません{% else %}⚠️ AI 生成に失敗しました{% endif %}
   </p>
   <p class="mt-1">{{ error }}</p>
   {% if retry_after_seconds is defined and retry_after_seconds %}
